@@ -88,11 +88,11 @@ def _create_building(
 
     ifcopenshell.api.run(
         "aggregate.assign_object", model,
-        relating_object=project, product=site,
+        relating_object=project, products=[site],
     )
     ifcopenshell.api.run(
         "aggregate.assign_object", model,
-        relating_object=site, product=building,
+        relating_object=site, products=[building],
     )
 
     # ── Storeys ──────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ def _create_building(
 
         ifcopenshell.api.run(
             "aggregate.assign_object", model,
-            relating_object=building, product=storey,
+            relating_object=building, products=[storey],
         )
         storeys.append(storey)
 
@@ -194,7 +194,7 @@ def _create_building(
             # Spatial containment
             ifcopenshell.api.run(
                 "spatial.assign_container", model,
-                relating_structure=storey, product=column,
+                relating_structure=storey, products=[column],
             )
 
     # ── Stairs ───────────────────────────────────────────────────────
@@ -205,7 +205,7 @@ def _create_building(
         stair.Name = f"STAIR-{i}-{i + 1}"
         ifcopenshell.api.run(
             "spatial.assign_container", model,
-            relating_structure=storeys[i], product=stair,
+            relating_structure=storeys[i], products=[stair],
         )
 
         flight = ifcopenshell.api.run(
@@ -214,7 +214,7 @@ def _create_building(
         flight.Name = f"FLIGHT-{i}-{i + 1}"
         ifcopenshell.api.run(
             "spatial.assign_container", model,
-            relating_structure=storeys[i], product=flight,
+            relating_structure=storeys[i], products=[flight],
         )
 
     # ── Write ────────────────────────────────────────────────────────

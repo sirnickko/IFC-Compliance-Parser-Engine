@@ -1,0 +1,9 @@
+ifcopenshell>=0.7.0
+numpy
+fastapi>=0.100.0
+uvicorn[standard]
+pydantic>=2.0
+python-multipart
+pytest>=7.0
+pytest-asyncio>=0.21
+httpx
