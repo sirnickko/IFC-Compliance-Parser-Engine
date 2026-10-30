@@ -1,10 +1,3 @@
-"""
-Unit tests for the IFCAuditor (services/ifc_parser.py).
-
-Validates SHA-256 hashing, metadata extraction, storey hierarchy
-parsing, and total height computation.
-"""
-
 from __future__ import annotations
 
 import hashlib

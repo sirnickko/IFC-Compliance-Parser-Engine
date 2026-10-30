@@ -25,7 +25,6 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
   auditResult,
   onLocateElement,
 }) => {
-  // Track open accordion cards (all open by default for rapid inspection)
   const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
 
   const toggleCard = (id: string) => {
@@ -36,7 +35,7 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
   };
 
   const isCardOpen = (id: string) => {
-    return openCards[id] !== false; // Default to true
+    return openCards[id] !== false;
   };
 
   if (!auditResult) {
@@ -59,7 +58,6 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
 
   return (
     <div className="h-full bg-slate-900/60 border-l border-slate-800 flex flex-col overflow-hidden">
-      {/* Verdict Banner Header */}
       <div className="p-5 border-b border-slate-800 bg-slate-900/80">
         <div
           className={`p-4 rounded-xl border flex items-center gap-3 shadow-lg ${
@@ -101,11 +99,10 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
           </div>
         </div>
 
-        {/* Summary Metric Counters */}
         <div className="grid grid-cols-3 gap-2 mt-4 text-center">
           <div className="p-2.5 rounded-lg bg-slate-800/70 border border-slate-700/60">
             <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 mb-0.5">
-              <Layers className="w-3 h-3 text-cyan-400" />
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
               <span>Storeys</span>
             </div>
             <div className="text-base font-bold font-mono text-white">
@@ -115,7 +112,7 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
 
           <div className="p-2.5 rounded-lg bg-slate-800/70 border border-slate-700/60">
             <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 mb-0.5">
-              <Columns className="w-3 h-3 text-cyan-400" />
+              <Columns className="w-3.5 h-3.5 text-cyan-400" />
               <span>Columns</span>
             </div>
             <div className="text-base font-bold font-mono text-white">
@@ -125,7 +122,7 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
 
           <div className="p-2.5 rounded-lg bg-slate-800/70 border border-slate-700/60">
             <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 mb-0.5">
-              <AlertTriangle className="w-3 h-3 text-rose-400" />
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
               <span>Violations</span>
             </div>
             <div
@@ -139,7 +136,6 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
         </div>
       </div>
 
-      {/* Accordion Findings List */}
       <div className="flex-1 p-5 overflow-y-auto space-y-3">
         <div className="flex items-center justify-between pb-1">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -170,7 +166,6 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
                     : 'border-amber-900/60 bg-slate-900/90 hover:border-amber-700/80'
                 }`}
               >
-                {/* Accordion Header */}
                 <button
                   type="button"
                   onClick={() => toggleCard(finding.id)}
@@ -205,10 +200,8 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
                   </div>
                 </button>
 
-                {/* Accordion Content Body */}
                 {isOpen && (
                   <div className="px-4 pb-4 pt-1 space-y-3 border-t border-slate-800/80 text-xs">
-                    {/* Observed Flaw */}
                     <div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                         Observed Violation:
@@ -218,10 +211,9 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
                       </p>
                     </div>
 
-                    {/* Structural Hazard */}
                     <div>
                       <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <AlertOctagon className="w-3 h-3 text-rose-400" />
+                        <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
                         Structural Risk:
                       </div>
                       <p className="text-rose-200/90 bg-rose-950/30 p-2.5 rounded-lg border border-rose-900/40 text-[11px] leading-relaxed">
@@ -229,10 +221,9 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
                       </p>
                     </div>
 
-                    {/* Actionable Remediation Callout */}
                     <div>
                       <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <Wrench className="w-3 h-3 text-cyan-400" />
+                        <Wrench className="w-3.5 h-3.5 text-cyan-400" />
                         Actionable Remediation:
                       </div>
                       <div className="p-3 bg-cyan-950/30 rounded-lg border border-cyan-800/60 text-cyan-100 text-[11px] leading-relaxed shadow-sm">
@@ -240,7 +231,6 @@ export const RemediationDrawer: React.FC<RemediationDrawerProps> = ({
                       </div>
                     </div>
 
-                    {/* Locate and Highlight in 3D Button */}
                     {finding.element_guids.length > 0 && (
                       <button
                         type="button"

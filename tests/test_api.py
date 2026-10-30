@@ -1,10 +1,3 @@
-"""
-Integration tests for the FastAPI /api/v1/ifc/audit endpoint.
-
-Uses the synchronous ``TestClient`` to exercise the full request →
-parse → rules → response pipeline against both synthetic fixtures.
-"""
-
 from __future__ import annotations
 
 import pytest
@@ -15,10 +8,6 @@ from main import app
 client = TestClient(app)
 
 
-# ──────────────────────────────────────────────────────────────────────
-# Health check
-# ──────────────────────────────────────────────────────────────────────
-
 class TestHealthEndpoint:
 
     def test_health_returns_200(self):
@@ -28,10 +17,6 @@ class TestHealthEndpoint:
         assert data["status"] == "healthy"
         assert "ifcopenshell_version" in data
 
-
-# ──────────────────────────────────────────────────────────────────────
-# Compliant audit
-# ──────────────────────────────────────────────────────────────────────
 
 class TestCompliantAudit:
 
@@ -74,10 +59,6 @@ class TestCompliantAudit:
         assert meta["total_building_height_m"] is not None
         assert len(meta["storeys"]) == 4
 
-
-# ──────────────────────────────────────────────────────────────────────
-# Violating audit
-# ──────────────────────────────────────────────────────────────────────
 
 class TestViolatingAudit:
 
@@ -155,10 +136,6 @@ class TestViolatingAudit:
         assert egress_rule["passed"] is False
         assert egress_rule["detected_values"]["storeys_missing_stairs"] >= 3
 
-
-# ──────────────────────────────────────────────────────────────────────
-# Edge cases
-# ──────────────────────────────────────────────────────────────────────
 
 class TestEdgeCases:
 

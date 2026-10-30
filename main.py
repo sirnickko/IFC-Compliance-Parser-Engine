@@ -1,11 +1,3 @@
-"""
-CivicShield IFC Compliance Engine — FastAPI Application.
-
-Exposes:
-  POST /api/v1/ifc/audit   — upload an IFC file for compliance checking
-  GET  /health              — runtime health / dependency check
-"""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -35,9 +27,6 @@ app = FastAPI(
 )
 
 
-# ──────────────────────────────────────────────────────────────────────
-# Health endpoint
-# ──────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health() -> dict:
@@ -57,9 +46,6 @@ async def health() -> dict:
     }
 
 
-# ──────────────────────────────────────────────────────────────────────
-# Audit endpoint
-# ──────────────────────────────────────────────────────────────────────
 
 @app.post("/api/v1/ifc/audit", response_model=ComplianceCertificate)
 async def audit_ifc(
@@ -75,12 +61,10 @@ async def audit_ifc(
     Ingest an ``.ifc`` file, run all compliance rules, and return
     a signed compliance certificate.
     """
-    # ---- 1. Read & validate upload ----
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=422, detail="Uploaded file is empty.")
 
-    # ---- 2. Parse IFC ----
     try:
         auditor = IFCAuditor(file_bytes)
     except Exception as exc:
@@ -89,16 +73,13 @@ async def audit_ifc(
             detail=f"Failed to parse IFC file: {exc}",
         )
 
-    # ---- 3. Extract metadata ----
     metadata: BuildingMetadata = auditor.get_metadata()
 
-    # ---- 4. Build audit params ----
     params = {
         "max_permitted_floors": max_permitted_floors,
         "min_column_dim_mm": min_column_dim_mm or 200.0,
     }
 
-    # ---- 5. Evaluate every rule ----
     results: list[RuleResult] = []
     for rule in ALL_RULES:
         try:
@@ -113,7 +94,6 @@ async def audit_ifc(
             )
         results.append(result)
 
-    # ---- 6. Compute aggregate status ----
     failed = sum(1 for r in results if not r.passed)
     passed = sum(1 for r in results if r.passed)
     total_elements = sum(
@@ -125,7 +105,6 @@ async def audit_ifc(
     else:
         overall = OverallStatus.APPROVED
 
-    # ---- 7. Assemble certificate ----
     certificate = ComplianceCertificate(
         parcel_id=parcel_id,
         file_sha256=auditor.file_hash,

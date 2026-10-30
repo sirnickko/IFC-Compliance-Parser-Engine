@@ -1,11 +1,3 @@
-"""
-Rule A — Maximum Storey / Height Audit.
-
-Compares the detected ``IfcBuildingStorey`` count against a municipal
-zoning limit supplied in the audit request.  Any building exceeding
-the permitted floor count is flagged as a violation.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -39,12 +31,10 @@ class StoreyLimitRule(BaseRule):
         violations: list[ViolationDetail] = []
 
         if detected_count > max_floors:
-            # Sort by elevation to identify which storeys exceed the limit
             sorted_storeys = sorted(
                 storeys,
                 key=lambda s: s.Elevation if s.Elevation is not None else 0.0,
             )
-            # Flag each storey beyond the permitted count
             for storey in sorted_storeys[max_floors:]:
                 violations.append(
                     ViolationDetail(

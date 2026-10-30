@@ -1,11 +1,3 @@
-"""
-Abstract base class for all deterministic compliance rules.
-
-Every rule must implement ``evaluate()`` and expose a unique ``rule_id``
-and human-readable ``rule_name``.  The Strategy Pattern lets us compose
-an arbitrary set of rules at audit time without modifying the engine core.
-"""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

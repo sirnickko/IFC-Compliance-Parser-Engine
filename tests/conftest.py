@@ -1,10 +1,3 @@
-"""
-Shared pytest fixtures for the CivicShield test suite.
-
-Session-scoped fixtures generate the synthetic IFC files once and cache
-them under ``tests/fixtures/`` for all downstream test modules.
-"""
-
 from __future__ import annotations
 
 import os

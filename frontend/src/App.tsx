@@ -15,7 +15,6 @@ export const App: React.FC = () => {
 
   const bimViewerRef = useRef<BIMViewerRef>(null);
 
-  // Health check on startup and periodically
   useEffect(() => {
     const verifyHealth = async () => {
       try {
@@ -30,7 +29,6 @@ export const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Preload violating sample model on first mount for instant demo satisfaction
   useEffect(() => {
     handleLoadSample('violating');
   }, []);
@@ -84,7 +82,6 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
-      {/* Top Navbar */}
       <Navbar
         onLoadSample={handleLoadSample}
         auditResult={auditResult}
@@ -92,9 +89,7 @@ export const App: React.FC = () => {
         isLoading={isLoading}
       />
 
-      {/* Main 3-Pane Body */}
       <main className="flex-1 flex overflow-hidden">
-        {/* Left Panel: Plan Uploader & Parameters (340px) */}
         <section className="w-[340px] shrink-0 h-full">
           <PlanUploader
             onAudit={handleAudit}
@@ -103,7 +98,6 @@ export const App: React.FC = () => {
           />
         </section>
 
-        {/* Center Panel: Interactive 3D BIM Viewer (flex-1) */}
         <section className="flex-1 h-full relative">
           <BIMViewer
             ref={bimViewerRef}
@@ -115,7 +109,6 @@ export const App: React.FC = () => {
           />
         </section>
 
-        {/* Right Panel: Weakness Spotter & Remediation Console (420px) */}
         <section className="w-[420px] shrink-0 h-full">
           <RemediationDrawer
             auditResult={auditResult}

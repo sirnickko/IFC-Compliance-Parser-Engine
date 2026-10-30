@@ -108,7 +108,6 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 flex-1 flex flex-col">
-        {/* Quick Demo Fixtures Selector */}
         <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-700/60 space-y-2">
           <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
             <span>Quick Test Fixtures</span>
@@ -145,7 +144,6 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           </div>
         </div>
 
-        {/* Dropzone */}
         <div
           id="dropzone"
           onDragOver={handleDragOver}
@@ -197,7 +195,6 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           )}
         </div>
 
-        {/* Error message banner */}
         {errorMessage && (
           <div className="p-3 bg-rose-950/50 border border-rose-800/60 rounded-lg text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
             <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
@@ -205,9 +202,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           </div>
         )}
 
-        {/* Form Controls */}
         <div className="space-y-3 pt-2">
-          {/* Parcel ID */}
           <div>
             <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
               <Building className="w-3.5 h-3.5 text-cyan-400" />
@@ -223,7 +218,6 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
             />
           </div>
 
-          {/* Permitted Storeys Limit */}
           <div>
             <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
               <Layers className="w-3.5 h-3.5 text-amber-400" />
@@ -248,7 +242,6 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
             </p>
           </div>
 
-          {/* Min Column Dimension */}
           <div>
             <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
               <Ruler className="w-3.5 h-3.5 text-emerald-400" />
@@ -275,7 +268,6 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           </div>
         </div>
 
-        {/* Primary Action Button */}
         <button
           type="submit"
           id="run-audit-btn"
@@ -295,7 +287,6 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           )}
         </button>
 
-        {/* SHA-256 Provenance Fingerprint Receipt */}
         {auditResult && (
           <div className="mt-4 pt-4 border-t border-slate-800 animate-in fade-in">
             <div className="p-3 bg-slate-800/70 rounded-xl border border-slate-700/80 space-y-2">

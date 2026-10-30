@@ -43,14 +43,12 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
   const meshMapRef = useRef<Map<string, THREE.Mesh>>(new Map());
   const reqIdRef = useRef<number | null>(null);
 
-  // Viewport states
   const [wireframe, setWireframe] = useState(false);
   const [isolateViolations, setIsolateViolations] = useState(false);
   const [showZoningCeiling, setShowZoningCeiling] = useState(true);
   const [hoveredElement, setHoveredElement] = useState<Element3DGeometry | null>(null);
   const [selectedElement, setSelectedElement] = useState<Element3DGeometry | null>(null);
 
-  // Map findings to GUIDs for quick status lookup
   const criticalGuids = new Set<string>();
   const warningGuids = new Set<string>();
 
@@ -64,7 +62,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     });
   });
 
-  // Calculate building center
   let minX = Infinity, maxX = -Infinity;
   let minY = Infinity, maxY = -Infinity;
   let minZ = Infinity, maxZ = -Infinity;
@@ -81,18 +78,15 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
   const centerZ = (minZ + maxZ) / 2 || 4;
   const modelHeight = (maxY - minY) || 12;
 
-  // Initialize Three.js Scene
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
-    // Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x090d16);
     scene.fog = new THREE.FogExp2(0x090d16, 0.012);
     sceneRef.current = scene;
 
-    // Camera
     const camera = new THREE.PerspectiveCamera(
       45,
       container.clientWidth / container.clientHeight,
@@ -102,7 +96,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     camera.position.set(centerX + 18, centerY + 14, centerZ + 22);
     cameraRef.current = camera;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -114,7 +107,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -124,7 +116,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     controls.maxDistance = 150;
     controlsRef.current = controls;
 
-    // Lights
     const hemiLight = new THREE.HemisphereLight(0x38bdf8, 0x0f172a, 0.9);
     scene.add(hemiLight);
 
@@ -139,14 +130,12 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     cyanRimLight.position.set(centerX - 30, centerY + 10, centerZ - 20);
     scene.add(cyanRimLight);
 
-    // Floor Grid
     const gridHelper = new THREE.GridHelper(50, 50, 0x0284c7, 0x1e293b);
     gridHelper.position.y = -0.05;
     gridHelper.position.x = centerX;
     gridHelper.position.z = centerZ;
     scene.add(gridHelper);
 
-    // Ground plane
     const groundGeo = new THREE.PlaneGeometry(120, 120);
     const groundMat = new THREE.MeshStandardMaterial({
       color: 0x070b12,
@@ -159,7 +148,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Render loop
     const animate = () => {
       reqIdRef.current = requestAnimationFrame(animate);
       controls.update();
@@ -167,7 +155,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     };
     animate();
 
-    // Resize handler
     const handleResize = () => {
       if (!container || !camera || !renderer) return;
       camera.aspect = container.clientWidth / container.clientHeight;
@@ -184,12 +171,10 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     };
   }, []);
 
-  // Populate meshes whenever elements, findings, or display toggles change
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
 
-    // Clear previous dynamic meshes
     meshMapRef.current.forEach((mesh) => {
       scene.remove(mesh);
       mesh.geometry.dispose();
@@ -201,7 +186,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     });
     meshMapRef.current.clear();
 
-    // Materials dictionary
     const defaultConcreteMat = new THREE.MeshStandardMaterial({
       color: 0xcbd5e1,
       transparent: true,
@@ -245,14 +229,12 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       wireframe,
     });
 
-    // Create element meshes
     elements.forEach((el) => {
       const isCritical = criticalGuids.has(el.guid);
       const isWarning = warningGuids.has(el.guid);
       const hasViolation = isCritical || isWarning;
 
       if (isolateViolations && !hasViolation && el.type !== 'IfcBuildingStorey') {
-        // In isolated mode, skip or render faint
       }
 
       const [dx, dy, dz] = el.dimensions;
@@ -264,7 +246,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       } else if (el.type === 'IfcBuildingStorey') {
         geo = new THREE.BoxGeometry(dx, dy, dz);
       } else {
-        // Stairs / others
         geo = new THREE.BoxGeometry(dx, dy, dz);
       }
 
@@ -291,9 +272,7 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       meshMapRef.current.set(el.guid, mesh);
     });
 
-    // Zoning Ceiling plane (if maxPermittedFloors is provided)
     if (showZoningCeiling && elements.length > 0) {
-      // Zoning ceiling height: storey 0 elevation + (maxPermittedFloors * 3.0m)
       const ceilingHeight = maxPermittedFloors * 3.0;
       const ceilingGeo = new THREE.PlaneGeometry(16, 16);
       const ceilingMat = new THREE.MeshBasicMaterial({
@@ -308,7 +287,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       ceiling.position.set(centerX, ceilingHeight, centerZ);
       scene.add(ceiling);
 
-      // Border outline for zoning plane
       const edges = new THREE.EdgesGeometry(ceilingGeo);
       const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2 }));
       line.rotation.x = Math.PI / 2;
@@ -319,13 +297,11 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     }
   }, [elements, findings, wireframe, isolateViolations, showZoningCeiling]);
 
-  // Handle external highlight / focus changes
   useEffect(() => {
     if (!highlightedGuid) return;
     focusElement(highlightedGuid);
   }, [highlightedGuid]);
 
-  // Focus and camera zoom on specific element GUID
   const focusElement = (guid: string) => {
     const mesh = meshMapRef.current.get(guid);
     if (!mesh || !controlsRef.current || !cameraRef.current) return;
@@ -334,7 +310,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     const camera = cameraRef.current;
     const controls = controlsRef.current;
 
-    // Smoothly animate controls target and camera position
     const startTarget = controls.target.clone();
     const startCamPos = camera.position.clone();
     const desiredCamPos = new THREE.Vector3(
@@ -357,7 +332,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     };
     animateFocus();
 
-    // Pulse highlight material
     const origMaterial = mesh.material;
     const pulseMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -386,13 +360,11 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     if (onSelectElement) onSelectElement(null);
   };
 
-  // Expose methods via ref
   useImperativeHandle(ref, () => ({
     focusElement,
     resetCamera,
   }));
 
-  // Handle Raycasting on Click
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const container = mountRef.current;
     if (!container || !cameraRef.current || !sceneRef.current) return;
@@ -422,14 +394,12 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
 
   return (
     <div className="relative w-full h-full bg-slate-950 flex flex-col overflow-hidden select-none">
-      {/* 3D WebGL Canvas */}
       <div
         ref={mountRef}
         onClick={handleClick}
         className="w-full h-full cursor-grab active:cursor-grabbing outline-none"
       />
 
-      {/* Floating Viewport Toolbar */}
       <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 shadow-2xl">
         <button
           onClick={resetCamera}
@@ -481,7 +451,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
         </button>
       </div>
 
-      {/* Legend & Stats Overlay */}
       <div className="absolute bottom-4 left-4 z-20 p-3 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 shadow-2xl flex items-center gap-4 text-xs font-mono">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-sm bg-rose-500 shadow-sm shadow-rose-500/50" />
@@ -497,7 +466,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
         </div>
       </div>
 
-      {/* Selected Element HUD Inspector */}
       {selectedElement && (
         <div className="absolute top-4 right-4 z-20 max-w-sm w-full p-4 rounded-xl bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-2xl animate-in fade-in slide-in-from-right-2">
           <div className="flex items-start justify-between border-b border-slate-800 pb-2 mb-3">
@@ -538,7 +506,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
             </div>
           </div>
 
-          {/* Violations associated with this element */}
           {findings.some((f) => f.element_guids.includes(selectedElement.guid)) && (
             <div className="mt-3 pt-2.5 border-t border-slate-800">
               <div className="text-[11px] font-bold text-rose-400 flex items-center gap-1.5 mb-1">

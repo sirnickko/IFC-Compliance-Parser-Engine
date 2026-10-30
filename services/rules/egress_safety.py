@@ -1,13 +1,3 @@
-"""
-Rule C — Vertical Egress & Stair Audit.
-
-Validates that every multi-storey building contains at least one
-designated vertical egress stair (``IfcStair`` or ``IfcStairFlight``).
-For buildings with more than two storeys the rule also checks that
-stairs exist on every storey except the topmost (there must be a
-connecting stair between each pair of adjacent floors).
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -28,10 +18,6 @@ class EgressSafetyRule(BaseRule):
     def rule_name(self) -> str:
         return "Vertical Egress & Stair Audit"
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
-
     @staticmethod
     def _storeys_with_stairs(model: ifcopenshell.file) -> set[str]:
         """Return the set of storey GlobalIds that contain at least one stair element."""
@@ -46,10 +32,6 @@ class EgressSafetyRule(BaseRule):
                     break
         return guids
 
-    # ------------------------------------------------------------------
-    # Rule evaluation
-    # ------------------------------------------------------------------
-
     def evaluate(
         self,
         model: ifcopenshell.file,
@@ -61,7 +43,6 @@ class EgressSafetyRule(BaseRule):
         violations: list[ViolationDetail] = []
 
         if len(storeys) <= 1:
-            # Single-storey building — stairs not mandatory
             return RuleResult(
                 rule_id=self.rule_id,
                 rule_name=self.rule_name,
@@ -74,7 +55,6 @@ class EgressSafetyRule(BaseRule):
                 },
             )
 
-        # Multi-storey: at least one stair must exist globally
         if total_stairs == 0:
             violations.append(
                 ViolationDetail(
@@ -88,15 +68,12 @@ class EgressSafetyRule(BaseRule):
                 )
             )
         else:
-            # Check per-storey coverage (all storeys except the topmost
-            # should host a stair connecting to the floor above)
             sorted_storeys = sorted(
                 storeys,
                 key=lambda s: s.Elevation if s.Elevation is not None else 0.0,
             )
             guids_with_stairs = self._storeys_with_stairs(model)
 
-            # Every storey except the topmost should have a stair
             for storey in sorted_storeys[:-1]:
                 if storey.GlobalId not in guids_with_stairs:
                     violations.append(

@@ -1,6 +1,7 @@
 import { AuditResponse } from '../types/audit';
 
-const API_BASE = '/api/v1';
+const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE = `${BASE_URL}/api/v1`;
 
 export async function auditPlan(
   file: File,
@@ -47,7 +48,7 @@ export async function loadSampleAudit(
 }
 
 export async function checkHealth(): Promise<{ status: string; ifcopenshell_version: string }> {
-  const response = await fetch('/health');
+  const response = await fetch(`${BASE_URL}/health`);
   if (!response.ok) {
     throw new Error('Backend offline');
   }

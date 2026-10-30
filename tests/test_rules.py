@@ -1,10 +1,3 @@
-"""
-Unit tests for all four compliance rules.
-
-Each rule is tested independently against both the compliant and
-violating synthetic fixtures.
-"""
-
 from __future__ import annotations
 
 import ifcopenshell
@@ -17,10 +10,6 @@ from services.rules.egress_safety import EgressSafetyRule
 from services.rules.column_continuity import ColumnContinuityRule
 
 
-# ──────────────────────────────────────────────────────────────────────
-# Helpers
-# ──────────────────────────────────────────────────────────────────────
-
 def _auditor(raw: bytes) -> IFCAuditor:
     return IFCAuditor(raw)
 
@@ -31,10 +20,6 @@ PARAMS_DEFAULT = {
     "column_continuity_tolerance_mm": 500.0,
 }
 
-
-# ══════════════════════════════════════════════════════════════════════
-#  RULE A — Storey Limit
-# ══════════════════════════════════════════════════════════════════════
 
 class TestStoreyLimitRule:
 
@@ -61,10 +46,6 @@ class TestStoreyLimitRule:
         result = self.rule.evaluate(a.model, a.unit_to_mm, params)
         assert result.passed is True
 
-
-# ══════════════════════════════════════════════════════════════════════
-#  RULE B — Column Dimension
-# ══════════════════════════════════════════════════════════════════════
 
 class TestColumnDimensionRule:
 
@@ -94,10 +75,6 @@ class TestColumnDimensionRule:
         assert result.passed is True
 
 
-# ══════════════════════════════════════════════════════════════════════
-#  RULE C — Egress Safety
-# ══════════════════════════════════════════════════════════════════════
-
 class TestEgressSafetyRule:
 
     rule = EgressSafetyRule()
@@ -115,10 +92,6 @@ class TestEgressSafetyRule:
         # Stairs exist only on levels 0-3, levels 4-6 are missing stairs
         assert result.detected_values["storeys_missing_stairs"] >= 3
 
-
-# ══════════════════════════════════════════════════════════════════════
-#  RULE D — Column Continuity
-# ══════════════════════════════════════════════════════════════════════
 
 class TestColumnContinuityRule:
 

@@ -1,10 +1,3 @@
-"""
-CivicShield compliance-rule registry.
-
-Imports every concrete rule and exposes ``ALL_RULES`` — the ordered list
-that the audit engine iterates over at runtime.
-"""
-
 from services.rules.base import BaseRule
 from services.rules.storey_limit import StoreyLimitRule
 from services.rules.column_dimension import ColumnDimensionRule

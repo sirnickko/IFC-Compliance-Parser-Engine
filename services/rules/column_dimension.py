@@ -1,12 +1,3 @@
-"""
-Rule B — Structural Column Cross-Section Check.
-
-Inspects every ``IfcColumn`` in the model, extracts cross-section
-dimensions from ``IfcProfileDef`` geometry (falling back to IFC
-property sets), and flags any column whose minimum cross-sectional
-dimension falls below the safety threshold.
-"""
-
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -26,10 +17,6 @@ class ColumnDimensionRule(BaseRule):
     @property
     def rule_name(self) -> str:
         return "Structural Column Cross-Section Check"
-
-    # ------------------------------------------------------------------
-    # Geometry helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _dims_from_profile(profile, unit_to_mm: float) -> Optional[dict]:
@@ -54,12 +41,10 @@ class ColumnDimensionRule(BaseRule):
             return None
         for shape_rep in rep.Representations or []:
             for item in shape_rep.Items or []:
-                # Direct extrusion
                 if hasattr(item, "SweptArea") and item.SweptArea:
                     dims = self._dims_from_profile(item.SweptArea, unit_to_mm)
                     if dims:
                         return dims
-                # Mapped representation (IfcMappedItem)
                 if hasattr(item, "MappingSource") and item.MappingSource:
                     mapped_rep = item.MappingSource.MappedRepresentation
                     if mapped_rep:
@@ -107,10 +92,6 @@ class ColumnDimensionRule(BaseRule):
             return {"type": "unknown", "min_dim_mm": depth}
         return None
 
-    # ------------------------------------------------------------------
-    # Rule evaluation
-    # ------------------------------------------------------------------
-
     def evaluate(
         self,
         model: ifcopenshell.file,
@@ -126,7 +107,6 @@ class ColumnDimensionRule(BaseRule):
             if dims is None:
                 dims = self._extract_dims_from_psets(col, unit_to_mm)
             if dims is None:
-                # Cannot determine dimensions — flag for manual review
                 violations.append(
                     ViolationDetail(
                         element_guid=col.GlobalId,

@@ -1,15 +1,3 @@
-"""
-Rule D — Column Continuity Check.
-
-Analyses column 2-D placement coordinates across adjacent storeys and
-flags *floating* or *discontinued* columns — i.e. columns present on an
-upper storey with no structurally supporting column at a matching XY
-position on the storey directly below.
-
-A configurable XY tolerance (default 500 mm) accommodates minor
-placement offsets between floors.
-"""
-
 from __future__ import annotations
 
 import math
@@ -30,10 +18,6 @@ class ColumnContinuityRule(BaseRule):
     @property
     def rule_name(self) -> str:
         return "Column Vertical Continuity Check"
-
-    # ------------------------------------------------------------------
-    # Placement helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _walk_placement_xy(placement, unit_to_mm: float) -> tuple[float, float]:
@@ -64,10 +48,6 @@ class ColumnContinuityRule(BaseRule):
             return None
         return self._walk_placement_xy(placement, unit_to_mm)
 
-    # ------------------------------------------------------------------
-    # Storey → column mapping
-    # ------------------------------------------------------------------
-
     def _group_columns_by_storey(
         self,
         model: ifcopenshell.file,
@@ -90,10 +70,6 @@ class ColumnContinuityRule(BaseRule):
                     if xy is not None:
                         result[guid].append((elem, xy[0], xy[1]))
         return result
-
-    # ------------------------------------------------------------------
-    # Rule evaluation
-    # ------------------------------------------------------------------
 
     def evaluate(
         self,

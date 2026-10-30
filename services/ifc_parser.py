@@ -1,11 +1,3 @@
-"""
-IFC Plan Ingestion & Provenance Service.
-
-``IFCAuditor`` is the primary façade for loading an IFC file from raw
-bytes, computing its immutable SHA-256 fingerprint, extracting project
-metadata, and resolving the spatial storey hierarchy.
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -34,17 +26,9 @@ class IFCAuditor:
         self.model: ifcopenshell.file = self._load_model()
         self.unit_to_mm: float = self._get_length_unit_to_mm()
 
-    # ------------------------------------------------------------------
-    # Provenance
-    # ------------------------------------------------------------------
-
     def _compute_hash(self) -> str:
         """Deterministic SHA-256 fingerprint of the raw IFC byte stream."""
         return hashlib.sha256(self.file_bytes).hexdigest()
-
-    # ------------------------------------------------------------------
-    # Model loading
-    # ------------------------------------------------------------------
 
     def _load_model(self) -> ifcopenshell.file:
         """Write bytes to a temp file and open with ifcopenshell."""
@@ -60,10 +44,6 @@ class IFCAuditor:
                 pass
         return model
 
-    # ------------------------------------------------------------------
-    # Unit detection
-    # ------------------------------------------------------------------
-
     def _get_length_unit_to_mm(self) -> float:
         """
         Return the factor that converts the model's native length unit
@@ -77,28 +57,20 @@ class IFCAuditor:
                 for unit in assignment.Units:
                     if getattr(unit, "UnitType", None) != "LENGTHUNIT":
                         continue
-                    # IfcSIUnit
                     if unit.is_a("IfcSIUnit"):
                         prefix = getattr(unit, "Prefix", None)
                         if prefix == "MILLI":
                             return 1.0
                         if prefix == "CENTI":
                             return 10.0
-                        # No prefix → base SI metre
                         return 1000.0
-                    # IfcConversionBasedUnit (feet, inches, …)
                     if unit.is_a("IfcConversionBasedUnit"):
                         factor = unit.ConversionFactor
                         if factor and factor.ValueComponent:
                             return float(factor.ValueComponent.wrappedValue) * 1000.0
         except Exception:
             pass
-        # Fallback: assume millimetres
         return 1.0
-
-    # ------------------------------------------------------------------
-    # Metadata extraction
-    # ------------------------------------------------------------------
 
     def get_storeys(self) -> list[StoreyInfo]:
         """Extract and sort all ``IfcBuildingStorey`` instances by elevation."""
@@ -137,7 +109,6 @@ class IFCAuditor:
         min_elev = min(elevations)
         max_elev = max(elevations)
 
-        # Try to use IfcRoof Z coordinate as the real top
         roof_z: Optional[float] = None
         for roof in self.model.by_type("IfcRoof"):
             z = self._element_z(roof)
@@ -174,16 +145,13 @@ class IFCAuditor:
 
     def get_metadata(self) -> BuildingMetadata:
         """Aggregate project header data and storey hierarchy."""
-        # Schema version
         schema_version: Optional[str] = getattr(self.model, "schema", None)
 
-        # IfcProject
         projects = self.model.by_type("IfcProject")
         project_name: Optional[str] = (
             projects[0].Name if projects else None
         )
 
-        # Header metadata
         creation_timestamp: Optional[str] = None
         authoring_app: Optional[str] = None
         try:

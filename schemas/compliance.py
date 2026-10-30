@@ -1,10 +1,3 @@
-"""
-Pydantic v2 response schemas for the CivicShield IFC Compliance Certificate.
-
-Defines the complete data contract for audit results, rule breakdowns,
-violation details, and the top-level compliance certificate envelope.
-"""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone
