@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
         if not violating_path.exists():
             generate_violating_building(str(violating_path))
     except Exception as e:
-        print(f"[CivicShield] Warning during pre-generating fixtures: {e}")
+        print(f"[LindaSite] Warning during pre-generating fixtures: {e}")
 
     yield
 

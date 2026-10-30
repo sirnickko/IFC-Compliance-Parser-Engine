@@ -1,1 +1,1 @@
-"""CivicShield Backend Tests."""
+"""LindaSite Backend Tests."""

@@ -72,7 +72,7 @@ def _create_synthetic_model(
     site.Name = "Civic Municipal Parcel"
 
     building = ifcopenshell.api.run("root.create_entity", model, ifc_class="IfcBuilding")
-    building.Name = "CivicShield Residential Tower"
+    building.Name = "LindaSite Residential Tower"
 
     ifcopenshell.api.run(
         "aggregate.assign_object",

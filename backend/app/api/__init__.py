@@ -1,1 +1,1 @@
-"""API endpoints for CivicShield."""
+"""API endpoints for LindaSite."""

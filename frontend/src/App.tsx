@@ -45,7 +45,9 @@ export const App: React.FC = () => {
         formValues.file,
         formValues.parcelId,
         formValues.maxPermittedFloors,
-        formValues.minColumnDimMm
+        formValues.minColumnDimMm,
+        formValues.county,
+        formValues.zoningZone
       );
       setAuditResult(result);
       setHighlightedGuid(null);

@@ -22,9 +22,10 @@ def health_check():
     """Health status and ifcopenshell version check."""
     return {
         "status": "healthy",
-        "service": "CivicShield BIM/IFC Compliance Engine",
+        "service": "LindaSite Kenya BIM/IFC Compliance Engine",
         "ifcopenshell_version": getattr(ifcopenshell, "__version__", "0.7.0+"),
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "market": "Kenya (NCA / NCC Standards)",
     }
 
 
@@ -37,19 +38,21 @@ def health_check():
 )
 async def audit_plan(
     file: UploadFile = File(..., description="Uploaded .ifc BIM file"),
-    parcel_id: str = Form(..., description="Municipal parcel / cadastral identifier"),
+    parcel_id: str = Form(..., description="Cadastral L.R. parcel identifier"),
+    county: Optional[str] = Form("Nairobi City County", description="Kenyan county"),
+    zoning_zone: Optional[str] = Form("Nairobi Zone 14", description="County zoning area / district"),
     max_permitted_floors: int = Form(
         DEFAULT_MAX_PERMITTED_FLOORS,
         description="Zoning code maximum permissible storeys",
     ),
     min_column_dim_mm: Optional[float] = Form(
         DEFAULT_MIN_COLUMN_DIM_MM,
-        description="Minimum structural column dimension in millimetres",
+        description="Minimum structural column dimension in millimetres (KS 04-245 / BS 8110)",
     ),
 ) -> AuditResponse:
     """
     Accepts an IFC building model, computes SHA-256 fingerprint, verifies compliance against
-    zoning height limits, column cross-sections, continuous vertical stair egress, and
+    Kenyan municipal zoning limits, column cross-sections, continuous vertical stair egress, and
     column vertical load path alignment.
     """
     filename = file.filename or ""
@@ -80,6 +83,8 @@ async def audit_plan(
             max_permitted_floors=max_permitted_floors,
             min_column_dim_mm=min_column_dim_mm or DEFAULT_MIN_COLUMN_DIM_MM,
         )
+        result.county = county
+        result.zoning_zone = zoning_zone
         return result
     except Exception as exc:
         raise HTTPException(
@@ -98,6 +103,8 @@ def audit_sample_plan(
     sample_name: str,
     max_permitted_floors: int = 4,
     min_column_dim_mm: float = 200.0,
+    county: str = "Nairobi City County",
+    zoning_zone: str = "Nairobi Zone 14 (Kasarani / Pipeline)",
 ) -> AuditResponse:
     """
     Convenience endpoint for frontend testing and one-click demo:
@@ -106,7 +113,6 @@ def audit_sample_plan(
     clean_name = "violating_building.ifc" if "violat" in sample_name.lower() else "compliant_building.ifc"
     file_path = FIXTURES_DIR / clean_name
 
-    # Auto-generate if missing
     if not file_path.exists():
         from tests.generate_synthetic_ifc import generate_compliant_building, generate_violating_building
         FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -119,11 +125,14 @@ def audit_sample_plan(
         file_bytes = f.read()
 
     auditor = IFCAuditor(file_bytes)
-    return auditor.audit(
-        parcel_id="DEMO-PARCEL-7049",
+    result = auditor.audit(
+        parcel_id="L.R. 209/8402 (Kasarani, Nairobi)",
         max_permitted_floors=max_permitted_floors,
         min_column_dim_mm=min_column_dim_mm,
     )
+    result.county = county
+    result.zoning_zone = zoning_zone
+    return result
 
 
 @router.get(

@@ -24,6 +24,8 @@ class Finding(BaseModel):
     details: str = Field(..., description="Exact metrics detected vs allowed threshold")
     structural_risk: str = Field(..., description="Plain-English explanation of structural collapse hazard")
     recommendation: str = Field(..., description="Concrete actionable remediation required for compliance")
+    standard_ref: Optional[str] = Field(default=None, description="Kenyan standard or statute reference (e.g. KS 04-245 / BS 8110)")
+    statutory_action: Optional[str] = Field(default=None, description="Recommended county planning / NCA enforcement action")
 
 
 class StoreyInfo(BaseModel):
@@ -67,6 +69,8 @@ class Element3DGeometry(BaseModel):
 class AuditResponse(BaseModel):
     file_sha256: str
     parcel_id: str
+    county: Optional[str] = "Nairobi City County"
+    zoning_zone: Optional[str] = "Nairobi Zone 14 (High-Density Residential)"
     audit_timestamp: str
     overall_status: OverallStatus
     metadata: BuildingMetadata

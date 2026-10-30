@@ -1,1 +1,1 @@
-"""CivicShield Backend Application."""
+"""LindaSite Backend Application."""

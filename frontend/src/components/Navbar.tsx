@@ -7,6 +7,8 @@ import {
   Server,
   Zap,
   Info,
+  MapPin,
+  Building2,
 } from 'lucide-react';
 import { AuditResponse } from '../types/audit';
 
@@ -34,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `CivicShield-Certificate-${auditResult.parcel_id}-${auditResult.file_sha256.slice(0, 8)}.json`;
+    a.download = `LindaSite-Kenya-Audit-${auditResult.parcel_id.replace(/[^a-zA-Z0-9]/g, '_')}-${auditResult.file_sha256.slice(0, 8)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -45,18 +47,18 @@ export const Navbar: React.FC<NavbarProps> = ({
     <>
       <header className="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between z-30 select-none">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 text-white font-bold ring-1 ring-cyan-400/40">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center shadow-lg shadow-rose-500/20 text-white font-bold ring-1 ring-rose-400/40">
             <Shield className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold tracking-tight text-white">CivicShield</span>
-              <span className="text-[10px] font-mono tracking-widest uppercase bg-cyan-950/80 text-cyan-400 border border-cyan-800/80 px-2 py-0.5 rounded-full font-semibold">
-                BIM/IFC v1.0
+              <span className="text-lg font-bold tracking-tight text-white">LindaSite Kenya</span>
+              <span className="text-[10px] font-mono tracking-widest uppercase bg-rose-950/80 text-rose-300 border border-rose-800/80 px-2 py-0.5 rounded-full font-semibold">
+                NCA & County Standards
               </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
-              Municipal Structural Safety Audit & 3D Weakness Spotter
+              Kenya Municipal Building Code Audit & Collapse Prevention Spotter
             </p>
           </div>
         </div>
@@ -70,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             />
             <Server className="w-3.5 h-3.5 text-slate-400" />
             <span className="text-slate-300 font-mono">
-              {backendHealthy ? 'Engine Connected' : 'Engine Offline'}
+              {backendHealthy ? 'NCA Engine Connected' : 'Engine Offline'}
             </span>
           </div>
 
@@ -82,13 +84,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-xs font-medium text-slate-200 transition shadow-sm active:scale-95 disabled:opacity-50"
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>Load Sample Demo Model</span>
+              <span>Load Kenya Case Fixtures</span>
             </button>
 
             {showSampleDropdown && (
-              <div className="absolute right-0 mt-2 w-72 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 mt-2 w-80 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="px-3 py-2 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Synthetic Test Bench Fixtures
+                  Kenyan Building Disaster Profiles
                 </div>
                 <button
                   id="sample-violating-btn"
@@ -101,14 +103,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="flex items-center justify-between text-xs font-semibold text-rose-300 group-hover:text-rose-200">
                     <span className="flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                      Violating 8-Storey Tower
+                      Kasarani / Pipeline Rogue Tenement
                     </span>
                     <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-mono">
                       FAIL
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 leading-tight">
-                    +4 illegal floors, 150mm slender columns, missing stairs, floating load paths.
+                    +4 illegal floors, 150mm slender columns, missing fire stairs, floating columns.
                   </p>
                 </button>
 
@@ -123,14 +125,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="flex items-center justify-between text-xs font-semibold text-emerald-300 group-hover:text-emerald-200">
                     <span className="flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      Compliant 4-Storey Model
+                      Compliant 4-Storey Residential Block
                     </span>
                     <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
                       PASS
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 leading-tight">
-                    4 floors, 300mm columns, fully continuous stair core and load paths.
+                    4 permitted floors, 300mm columns, fully continuous fire stair core and load path.
                   </p>
                 </button>
               </div>
@@ -140,17 +142,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           {auditResult && (
             <button
               onClick={handleDownloadCertificate}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium shadow-md shadow-cyan-600/20 transition active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium shadow-md shadow-rose-600/20 transition active:scale-95"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export Certificate</span>
+              <span className="hidden sm:inline">Export Audit Certificate</span>
             </button>
           )}
 
           <button
             onClick={() => setShowInfoModal(true)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
-            title="System Documentation & Standards"
+            title="Kenyan Standards & Collapse Study Background"
           >
             <Info className="w-4 h-4" />
           </button>
@@ -159,36 +161,36 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {showInfoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-2xl p-6 shadow-2xl relative">
+          <div className="bg-slate-900 border border-slate-700 max-w-xl w-full rounded-2xl p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Shield className="w-5 h-5 text-cyan-400" />
-              CivicShield Architectural & Structural Rules Engine
+              <Shield className="w-5 h-5 text-rose-400" />
+              LindaSite Kenya: Preventing Building Collapses
             </h3>
-            <p className="text-sm text-slate-300 mt-3 leading-relaxed">
-              CivicShield performs automated, deterministic verification on Industry Foundation
-              Classes (<code className="text-cyan-400 font-mono">.ifc</code>) architectural and
-              structural building information models.
+            <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+              Following forensic investigations into repeated catastrophic building collapses in Nairobi (Kasarani, Huruma, Tassia),
+              Kiambu (Kinoo, Ruiru), and Mombasa, LindaSite provides an automated, tamper-proof gatekeeper for county planning
+              authorities, NCA inspectors, and consulting engineers.
             </p>
             <div className="mt-4 space-y-2.5 text-xs text-slate-300">
               <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                <span className="font-semibold text-amber-300 block mb-0.5">1. Immutable SHA-256 Fingerprint</span>
-                Calculated directly from the raw byte stream prior to parsing to detect post-approval tampering.
+                <span className="font-semibold text-rose-300 block mb-0.5">1. Illegal Storey Additions (NCA Cause #1)</span>
+                Developers obtain permits for 4 floors and stealthily cast 4 extra floors without foundation reinforcement. LindaSite checks IFC spatial storeys against cadastral parcel permits under the <em>Physical and Land Use Planning Act, 2019</em>.
               </div>
               <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                <span className="font-semibold text-rose-300 block mb-0.5">2. Zoning Storey & Height Limit</span>
-                Cross-references <code className="text-slate-200">IfcBuildingStorey</code> entities against municipal parcel height restrictions.
+                <span className="font-semibold text-rose-300 block mb-0.5">2. Undersized Slender Columns (KS 04-245 / BS 8110)</span>
+                Casting 150 mm columns instead of the required 200 mm+ minimum to cut costs causes sudden Euler buckling under axial dead loads. LindaSite parses profile geometries across all structural columns.
               </div>
               <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                <span className="font-semibold text-rose-300 block mb-0.5">3. Column Slenderness & Cross-Section</span>
-                Validates structural columns against minimum dimensional safety requirements (default: 200 mm).
+                <span className="font-semibold text-rose-300 block mb-0.5">3. Floating Columns / Discontinuous Load Paths</span>
+                Omitting ground-floor columns to accommodate parking bays or retail stalls without transfer girders creates fatal punching shear. LindaSite performs 2D centroid proximity checks across consecutive storeys.
               </div>
               <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                <span className="font-semibold text-rose-300 block mb-0.5">4. Continuous Vertical Stair Egress</span>
-                Ensures continuous life-safety escape routes spanning all occupied storeys.
+                <span className="font-semibold text-rose-300 block mb-0.5">4. Continuous Fire Stair Egress</span>
+                Enforces the <em>Kenya National Building Code 2024</em> requirement for protected, continuous vertical egress routes spanning all storeys down to exterior discharge.
               </div>
               <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700/60">
-                <span className="font-semibold text-rose-300 block mb-0.5">5. Column Alignment & Load Path Continuity</span>
-                Detects floating columns terminated mid-slab without transfer girders.
+                <span className="font-semibold text-amber-300 block mb-0.5">5. SHA-256 Provenance Fingerprint</span>
+                Generates a cryptographic hash directly from raw bytes to prevent post-approval drawing substitutions on site.
               </div>
             </div>
             <div className="mt-6 flex justify-end">

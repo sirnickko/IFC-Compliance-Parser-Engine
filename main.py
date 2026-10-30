@@ -17,7 +17,7 @@ from services.ifc_parser import IFCAuditor
 from services.rules import ALL_RULES
 
 app = FastAPI(
-    title="CivicShield IFC Compliance Engine",
+    title="LindaSite IFC Compliance Engine",
     version="1.0.0",
     description=(
         "Automated BIM / IFC building-code compliance parser engine. "
@@ -42,7 +42,7 @@ async def health() -> dict:
     return {
         "status": "healthy",
         "ifcopenshell_version": str(ifc_version),
-        "engine": "civicshield-ifc-engine",
+        "engine": "lindasite-ifc-engine",
     }
 
 

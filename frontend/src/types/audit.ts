@@ -11,6 +11,8 @@ export interface Finding {
   details: string;
   structural_risk: string;
   recommendation: string;
+  standard_ref?: string | null;
+  statutory_action?: string | null;
 }
 
 export interface StoreyInfo {
@@ -44,16 +46,18 @@ export interface AuditSummary {
 export interface Element3DGeometry {
   guid: string;
   name: string;
-  type: string; // "IfcColumn", "IfcBuildingStorey", "IfcStair", "IfcStairFlight"
+  type: string;
   storey?: string | null;
-  position: [number, number, number]; // [x, y, z] in meters
-  dimensions: [number, number, number]; // [dx, dy, dz] in meters
+  position: [number, number, number];
+  dimensions: [number, number, number];
   color_hint?: string | null;
 }
 
 export interface AuditResponse {
   file_sha256: string;
   parcel_id: string;
+  county?: string;
+  zoning_zone?: string;
   audit_timestamp: string;
   overall_status: OverallStatus;
   metadata: BuildingMetadata;
@@ -64,6 +68,8 @@ export interface AuditResponse {
 
 export interface AuditFormValues {
   parcelId: string;
+  county?: string;
+  zoningZone?: string;
   maxPermittedFloors: number;
   minColumnDimMm: number;
   file: File | null;

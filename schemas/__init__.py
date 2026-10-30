@@ -1,1 +1,1 @@
-# CivicShield IFC Compliance Schemas
+# LindaSite IFC Compliance Schemas

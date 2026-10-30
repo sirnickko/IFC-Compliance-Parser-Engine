@@ -7,11 +7,15 @@ export async function auditPlan(
   file: File,
   parcelId: string,
   maxPermittedFloors: number,
-  minColumnDimMm: number
+  minColumnDimMm: number,
+  county: string = 'Nairobi City County',
+  zoningZone: string = 'Nairobi Zone 14'
 ): Promise<AuditResponse> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('parcel_id', parcelId);
+  formData.append('county', county);
+  formData.append('zoning_zone', zoningZone);
   formData.append('max_permitted_floors', maxPermittedFloors.toString());
   formData.append('min_column_dim_mm', minColumnDimMm.toString());
 
@@ -31,11 +35,15 @@ export async function auditPlan(
 export async function loadSampleAudit(
   sampleName: 'violating' | 'compliant',
   maxPermittedFloors = 4,
-  minColumnDimMm = 200
+  minColumnDimMm = 200,
+  county = 'Nairobi City County',
+  zoningZone = 'Nairobi Zone 14 (Kasarani / Pipeline)'
 ): Promise<AuditResponse> {
   const params = new URLSearchParams({
     max_permitted_floors: maxPermittedFloors.toString(),
     min_column_dim_mm: minColumnDimMm.toString(),
+    county,
+    zoning_zone: zoningZone,
   });
 
   const response = await fetch(`${API_BASE}/plans/sample-audit/${sampleName}?${params.toString()}`);

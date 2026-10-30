@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Loader2,
   FileText,
+  MapPin,
+  ShieldAlert,
 } from 'lucide-react';
 import { AuditFormValues, AuditResponse } from '../types/audit';
 
@@ -20,12 +22,53 @@ interface PlanUploaderProps {
   isLoading: boolean;
 }
 
+const KENYAN_ZONES: Record<string, { label: string; county: string; maxFloors: number; minColMm: number }> = {
+  nairobi_14: {
+    label: 'Nairobi Zone 14: Kasarani / Roysambu / Embakasi',
+    county: 'Nairobi City County',
+    maxFloors: 4,
+    minColMm: 200,
+  },
+  nairobi_5: {
+    label: 'Nairobi Zone 5: Kileleshwa / Kilimani',
+    county: 'Nairobi City County',
+    maxFloors: 8,
+    minColMm: 250,
+  },
+  nairobi_4: {
+    label: 'Nairobi Zone 4: Lavington / Karen / Spring Valley',
+    county: 'Nairobi City County',
+    maxFloors: 3,
+    minColMm: 200,
+  },
+  kiambu_ruiru: {
+    label: 'Kiambu County: Ruiru / Juja Corridor',
+    county: 'Kiambu County',
+    maxFloors: 4,
+    minColMm: 200,
+  },
+  kiambu_kinoo: {
+    label: 'Kiambu County: Kinoo / Kikuyu',
+    county: 'Kiambu County',
+    maxFloors: 5,
+    minColMm: 200,
+  },
+  mombasa_island: {
+    label: 'Mombasa County: Island / Nyali',
+    county: 'Mombasa County',
+    maxFloors: 6,
+    minColMm: 250,
+  },
+};
+
 export const PlanUploader: React.FC<PlanUploaderProps> = ({
   onAudit,
   auditResult,
   isLoading,
 }) => {
-  const [parcelId, setParcelId] = useState('MUN-PARCEL-8402');
+  const [county, setCounty] = useState('Nairobi City County');
+  const [selectedZoneKey, setSelectedZoneKey] = useState('nairobi_14');
+  const [parcelId, setParcelId] = useState('L.R. 209/8402 (Kasarani)');
   const [maxPermittedFloors, setMaxPermittedFloors] = useState<number>(4);
   const [minColumnDimMm, setMinColumnDimMm] = useState<number>(200);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -34,6 +77,16 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleZoneChange = (zoneKey: string) => {
+    setSelectedZoneKey(zoneKey);
+    const z = KENYAN_ZONES[zoneKey];
+    if (z) {
+      setCounty(z.county);
+      setMaxPermittedFloors(z.maxFloors);
+      setMinColumnDimMm(z.minColMm);
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -61,7 +114,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
   const validateAndSetFile = (file: File) => {
     setErrorMessage(null);
     if (!file.name.toLowerCase().endsWith('.ifc') && !file.name.toLowerCase().endsWith('.step')) {
-      setErrorMessage('Please select a valid Industry Foundation Classes (.ifc) file.');
+      setErrorMessage('Please select a valid Industry Foundation Classes (.ifc) model file exported from ArchiCAD or Revit.');
       return;
     }
     setSelectedFile(file);
@@ -72,13 +125,15 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
     setErrorMessage(null);
 
     if (!selectedFile) {
-      setErrorMessage('Please upload or drag & drop an IFC file to audit.');
+      setErrorMessage('Please upload or drag & drop an IFC model to audit.');
       return;
     }
 
     try {
       await onAudit({
         parcelId,
+        county,
+        zoningZone: KENYAN_ZONES[selectedZoneKey]?.label || selectedZoneKey,
         maxPermittedFloors: Number(maxPermittedFloors),
         minColumnDimMm: Number(minColumnDimMm),
         file: selectedFile,
@@ -98,52 +153,82 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
   return (
     <div className="h-full flex flex-col bg-slate-900/60 border-r border-slate-800 p-5 overflow-y-auto">
       <div className="flex items-center gap-2 mb-4">
-        <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20">
-          <UploadCloud className="w-5 h-5" />
+        <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20">
+          <ShieldAlert className="w-5 h-5 text-rose-400" />
         </div>
         <div>
-          <h2 className="text-sm font-bold text-white tracking-tight">Plan Ingestion & Zoning</h2>
-          <p className="text-xs text-slate-400">Deterministic Municipal Code Parameters</p>
+          <h2 className="text-sm font-bold text-white tracking-tight">Kenya Municipal BIM Ingestion</h2>
+          <p className="text-xs text-slate-400">NCA & County Code Verification</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 flex-1 flex flex-col">
+        {/* Kenyan Disaster Collapse Profiles */}
         <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-700/60 space-y-2">
           <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-            <span>Quick Test Fixtures</span>
-            <span className="text-[9px] text-cyan-400 font-mono">1-Click Load</span>
+            <span>Kenyan Case Profiles</span>
+            <span className="text-[9px] text-cyan-400 font-mono">1-Click Test</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               id="quick-load-violating-btn"
-              onClick={() => onAudit({ parcelId: 'PARCEL-VIOLATING-01', maxPermittedFloors: 4, minColumnDimMm: 200, file: null, sampleName: 'violating' } as any)}
+              onClick={() => {
+                setParcelId('L.R. 209/8402 (Kasarani, Nairobi)');
+                setSelectedZoneKey('nairobi_14');
+                setMaxPermittedFloors(4);
+                setMinColumnDimMm(200);
+                onAudit({
+                  parcelId: 'L.R. 209/8402 (Kasarani, Nairobi)',
+                  county: 'Nairobi City County',
+                  zoningZone: 'Nairobi Zone 14 (Kasarani / Pipeline)',
+                  maxPermittedFloors: 4,
+                  minColumnDimMm: 200,
+                  file: null,
+                  sampleName: 'violating',
+                } as any);
+              }}
               disabled={isLoading}
               className="p-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/50 border border-rose-800/60 hover:border-rose-600 text-left transition group active:scale-95 disabled:opacity-50"
             >
               <div className="text-[10px] font-bold text-rose-300 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                Violating Tower
+                Kasarani Collapse Profile
               </div>
-              <div className="text-[9px] text-slate-400 mt-0.5 font-mono">8F • 150mm col</div>
+              <div className="text-[9px] text-slate-400 mt-0.5 font-mono">8F (+4 illegal) • 150mm col</div>
             </button>
 
             <button
               type="button"
               id="quick-load-compliant-btn"
-              onClick={() => onAudit({ parcelId: 'PARCEL-COMPLIANT-01', maxPermittedFloors: 4, minColumnDimMm: 200, file: null, sampleName: 'compliant' } as any)}
+              onClick={() => {
+                setParcelId('L.R. 209/11204 (Westlands, Nairobi)');
+                setSelectedZoneKey('nairobi_14');
+                setMaxPermittedFloors(4);
+                setMinColumnDimMm(200);
+                onAudit({
+                  parcelId: 'L.R. 209/11204 (Westlands, Nairobi)',
+                  county: 'Nairobi City County',
+                  zoningZone: 'Nairobi Zone 14 (Compliant Sector)',
+                  maxPermittedFloors: 4,
+                  minColumnDimMm: 200,
+                  file: null,
+                  sampleName: 'compliant',
+                } as any);
+              }}
               disabled={isLoading}
               className="p-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-800/60 hover:border-emerald-600 text-left transition group active:scale-95 disabled:opacity-50"
             >
               <div className="text-[10px] font-bold text-emerald-300 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Compliant Model
+                Compliant Block
               </div>
-              <div className="text-[9px] text-slate-400 mt-0.5 font-mono">4F • 300mm col</div>
+              <div className="text-[9px] text-slate-400 mt-0.5 font-mono">4F • 300mm col • Dual stairs</div>
             </button>
           </div>
         </div>
 
+        {/* Dropzone */}
         <div
           id="dropzone"
           onDragOver={handleDragOver}
@@ -175,7 +260,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
                 {selectedFile.name}
               </p>
               <p className="text-[10px] text-slate-400 font-mono">
-                {(selectedFile.size / 1024).toFixed(1)} KB • Click to swap file
+                {(selectedFile.size / 1024).toFixed(1)} KB • ArchiCAD/Revit IFC
               </p>
             </div>
           ) : (
@@ -185,10 +270,10 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-200">
-                  <span className="text-cyan-400 font-semibold">Click to upload</span> or drag IFC model
+                  <span className="text-cyan-400 font-semibold">Upload IFC Model</span> (ArchiCAD / Revit)
                 </p>
                 <p className="text-[10px] text-slate-500 mt-1 font-mono">
-                  Supports IFC2X3 & IFC4 (.ifc, .step)
+                  Supported formats: IFC 2X3, IFC 4 (.ifc, .step)
                 </p>
               </div>
             </div>
@@ -202,26 +287,48 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           </div>
         )}
 
+        {/* Kenya Municipal Controls */}
         <div className="space-y-3 pt-2">
+          {/* County & Zone Selection */}
+          <div>
+            <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+              <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+              County & Urban Planning Zone
+            </label>
+            <select
+              value={selectedZoneKey}
+              onChange={(e) => handleZoneChange(e.target.value)}
+              className="w-full bg-slate-800/90 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg px-2.5 py-2 text-xs font-sans text-slate-100 outline-none transition"
+            >
+              {Object.entries(KENYAN_ZONES).map(([key, item]) => (
+                <option key={key} value={key} className="bg-slate-900 text-slate-100">
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Parcel ID / L.R. No. */}
           <div>
             <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
               <Building className="w-3.5 h-3.5 text-cyan-400" />
-              Parcel / Cadastral ID
+              Cadastral Parcel (L.R. Number)
             </label>
             <input
               type="text"
               required
               value={parcelId}
               onChange={(e) => setParcelId(e.target.value)}
-              placeholder="e.g. ZONE-DISTRICT-4A"
+              placeholder="e.g. L.R. 209/8402 (Nairobi) or RUIRU/BLOCK 2/451"
               className="w-full bg-slate-800/90 border border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-100 placeholder:text-slate-600 outline-none transition"
             />
           </div>
 
+          {/* Permitted Storeys Limit */}
           <div>
             <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
               <Layers className="w-3.5 h-3.5 text-amber-400" />
-              Permitted Storeys Limit
+              Permitted Storeys (County Permit)
             </label>
             <div className="relative">
               <input
@@ -238,14 +345,15 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
               </span>
             </div>
             <p className="text-[10px] text-slate-500 mt-1">
-              Storeys exceeding this count trigger <span className="text-rose-400 font-mono">ERR_STOREY_EXCEEDED</span>.
+              Physical Planning Act 2019: Extra floors trigger <span className="text-rose-400 font-mono">ERR_STOREY_EXCEEDED</span>.
             </p>
           </div>
 
+          {/* Min Column Dimension */}
           <div>
             <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
               <Ruler className="w-3.5 h-3.5 text-emerald-400" />
-              Min Column Dimension
+              Min Column Section (KS 04-245 / BS 8110)
             </label>
             <div className="relative">
               <input
@@ -263,7 +371,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
               </span>
             </div>
             <p className="text-[10px] text-slate-500 mt-1">
-              Columns below this cross-section trigger <span className="text-rose-400 font-mono">ERR_UNDERSIZED_COLUMN</span>.
+              Columns below 200 mm trigger <span className="text-rose-400 font-mono">ERR_UNDERSIZED_COLUMN</span>.
             </p>
           </div>
         </div>
@@ -272,17 +380,17 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           type="submit"
           id="run-audit-btn"
           disabled={isLoading || !selectedFile}
-          className="w-full mt-4 py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold tracking-wide uppercase rounded-xl shadow-lg shadow-cyan-600/25 flex items-center justify-center gap-2 transition active:scale-[0.98]"
+          className="w-full mt-4 py-2.5 px-4 bg-gradient-to-r from-rose-600 via-cyan-600 to-blue-600 hover:from-rose-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold tracking-wide uppercase rounded-xl shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 transition active:scale-[0.98]"
         >
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span>Auditing Structural Plan...</span>
+              <span>Verifying Against Kenya Codes...</span>
             </>
           ) : (
             <>
               <FileText className="w-4 h-4 text-cyan-200" />
-              <span>Run Structural Audit</span>
+              <span>Run Kenya Municipal Audit</span>
             </>
           )}
         </button>
@@ -320,7 +428,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
               </div>
 
               <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                <span>Timestamp:</span>
+                <span>Audited:</span>
                 <span className="font-mono text-slate-300">
                   {new Date(auditResult.audit_timestamp).toLocaleTimeString()}
                 </span>
