@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -75,6 +76,16 @@ async def audit_plan(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Uploaded file is empty (0 bytes).",
         )
+
+    # Mock parcel lookup (clearly labeled as mock data — not from an official registry)
+    mock_parcels_path = Path(__file__).resolve().parents[3] / "mock_parcels.json"
+    if mock_parcels_path.is_file():
+        import json as _json
+        with open(mock_parcels_path, "r", encoding="utf-8") as mp:
+            parcels = _json.load(mp).get("mock_parcels", [])
+        match = next((p for p in parcels if p["parcel_id"] == parcel_id), None)
+        if match:
+            max_permitted_floors = match["max_permitted_storeys"]
 
     try:
         auditor = IFCAuditor(file_bytes)

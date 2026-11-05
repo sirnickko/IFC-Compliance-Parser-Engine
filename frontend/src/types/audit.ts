@@ -13,6 +13,10 @@ export interface Finding {
   recommendation: string;
   standard_ref?: string | null;
   statutory_action?: string | null;
+  source_document?: string | null;
+  clause_reference?: string | null;
+  last_reviewed?: string | null;
+  status?: string | null;
 }
 
 export interface StoreyInfo {

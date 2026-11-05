@@ -26,15 +26,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showSampleDropdown, setShowSampleDropdown] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
 
-  const handleDownloadCertificate = () => {
+  const handleDownloadReport = () => {
     if (!auditResult) return;
-    const blob = new Blob([JSON.stringify(auditResult, null, 2)], {
+    const reportData = {
+      report_title: 'SiteBeta Kenya - Compliance Check Report',
+      disclaimer: 'Advisory only. This is not an official approval, and structural adequacy must be confirmed by a registered engineer.',
+      exported_at: new Date().toISOString(),
+      ...auditResult,
+    };
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `SiteBeta-Kenya-Audit-${auditResult.parcel_id.replace(/[^a-zA-Z0-9]/g, '_')}-${auditResult.file_sha256.slice(0, 8)}.json`;
+    a.download = `SiteBeta-Kenya-Compliance-Report-${auditResult.parcel_id.replace(/[^a-zA-Z0-9]/g, '_')}-${auditResult.file_sha256.slice(0, 8)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -51,8 +57,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-lg font-extrabold tracking-tight text-slate-900">SiteBeta Kenya</span>
-              <span className="text-[10px] font-mono tracking-widest uppercase bg-slate-900 text-white px-2.5 py-0.5 rounded-full font-semibold shadow-2xs">
-                NCA & County Standards
+              <span className="text-[10px] font-mono tracking-wider bg-slate-900 text-white px-2.5 py-0.5 rounded-full font-semibold shadow-2xs">
+                Based on published Kenyan regulations (see rule sources)
               </span>
             </div>
             <p className="text-xs text-slate-500 hidden sm:block">
@@ -62,7 +68,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs shadow-2xs">
+          <div
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs shadow-2xs"
+            title="Local rule engine v0.1 (not connected to government systems)"
+          >
             <span
               className={`w-2 h-2 rounded-full ${
                 backendHealthy ? 'bg-emerald-500 animate-pulse-subtle shadow-xs shadow-emerald-500' : 'bg-rose-500'
@@ -70,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             />
             <Server className="w-3.5 h-3.5 text-slate-500" />
             <span className="text-slate-700 font-mono text-[11px] font-medium">
-              {backendHealthy ? 'NCA Engine Connected' : 'Engine Offline'}
+              {backendHealthy ? 'Rule Engine v0.1' : 'Engine Offline'}
             </span>
           </div>
 
@@ -139,11 +148,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {auditResult && (
             <button
-              onClick={handleDownloadCertificate}
+              onClick={handleDownloadReport}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition active:scale-95 border border-slate-800"
             >
               <Download className="w-3.5 h-3.5 text-slate-200" />
-              <span className="hidden sm:inline">Export Audit Certificate</span>
+              <span className="hidden sm:inline">Export Compliance Check Report</span>
             </button>
           )}
 

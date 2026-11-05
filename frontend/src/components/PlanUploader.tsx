@@ -345,7 +345,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
               </span>
             </div>
             <p className="text-[10px] text-slate-500 mt-1">
-              Physical Planning Act 2019: Extra floors trigger <span className="text-slate-800 font-mono font-bold">ERR_STOREY_EXCEEDED</span>.
+              Physical and Land Use Planning Act, 2019: Extra floors trigger <span className="text-slate-800 font-mono font-bold">ERR_STOREY_EXCEEDED</span>.
             </p>
           </div>
 

@@ -26,6 +26,11 @@ class Finding(BaseModel):
     recommendation: str = Field(..., description="Concrete actionable remediation required for compliance")
     standard_ref: Optional[str] = Field(default=None, description="Kenyan standard or statute reference (e.g. KS 04-245 / BS 8110)")
     statutory_action: Optional[str] = Field(default=None, description="Recommended county planning / NCA enforcement action")
+    # New provenance fields
+    source_document: Optional[str] = Field(default=None, description="Document where the rule originates")
+    clause_reference: Optional[str] = Field(default=None, description="Clause or section reference within the source document")
+    last_reviewed: Optional[str] = Field(default=None, description="Date the rule was last reviewed (ISO 8601)")
+    status: Optional[str] = Field(default=None, description="Verification status: verified | needs_review")
 
 
 class StoreyInfo(BaseModel):

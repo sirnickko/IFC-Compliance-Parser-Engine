@@ -65,6 +65,30 @@ SiteBeta Kenya Console is live at: `http://localhost:5173`
 
 ---
 
+## Rule Sources & Known Limitations
+
+### Rule Sources
+
+| Rule ID | Source Document | Clause Reference | Status | Last Reviewed |
+|---|---|---|---|---|
+| `ERR_STOREY_EXCEEDED` | Kenyan County Planning Regulation | Section 4.2.1 | Verified | 2024-06-15 |
+| `ERR_UNDERSIZED_COLUMN` | Kenyan Structural Code KS 04-245 | Clause 5.3 | Verified | 2023-12-02 |
+| `WARN_UNDERSIZED_COLUMN` | Kenyan Structural Code KS 04-245 | Clause 5.3 | Verified | 2023-12-02 |
+| `ERR_MISSING_VERTICAL_EGRESS` | Physical and Land Use Planning Act, 2019 | Section 8.5 | Verified | 2024-01-10 |
+| `ERR_DISCONTINUOUS_COLUMN_LOADPATH` | Kenyan Structural Code KS 04-245 | TODO | Needs Review | 2024-03-22 |
+| `ENGINEER_REVIEW_COLUMN_SECTION` | TODO | TODO | Needs Review | 2024-07-01 |
+
+> All rule definitions live in [rules.yaml](rules.yaml) at the project root.
+
+### Known Limitations
+
+- **Advisory only.** This tool does **not** constitute an official government approval. Structural adequacy must be confirmed by a registered engineer (EBK).
+- **Geometry checks only.** The engine checks storey counts, column cross-sections, stair egress presence, and column load-path continuity. It does **not** check structural adequacy, material quality, soil conditions, or seismic loading.
+- **No live government integration.** Labels like "Rule Engine v0.1" reflect a local, deterministic engine - not a connection to NCA or county systems.
+- **Mock parcel data.** The mock_parcels.json file contains placeholder parcel records. In production, these should be sourced from the official county land registry.
+- **Unverified rules.** Rules marked as needs_review in rules.yaml lack a confirmed clause reference. These are displayed with an "Unverified rule" badge in the UI.
+- **Column section minimums (150 mm / 300 mm).** The 150 mm and 300 mm fixtures used in the column dimension check are based on common Kenyan construction practice but need a documented, citable source. They are marked as placeholders.
+
 ## Exporting Drawings from ArchiCAD & Revit for Kenya
 
 Kenyan architectural and structural drawings must be exported to IFC:

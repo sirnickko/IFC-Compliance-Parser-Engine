@@ -1,0 +1,15 @@
+{
+  "mock_parcels": [
+    {
+      "parcel_id": "PARCEL123",
+      "max_permitted_storeys": 4,
+      "description": "Mock parcel for testing"
+    },
+    {
+      "parcel_id": "PARCEL456",
+      "max_permitted_storeys": 5,
+      "description": "Another mock parcel"
+    }
+  ]
+}
+

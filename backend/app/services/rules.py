@@ -15,6 +15,8 @@ class RulesEngine:
       - Kenya Standard KS 04-245 / BS 8110-1:1997 (Structural Use of Concrete)
       - Kenya National Building Code 2024
       - National Construction Authority (NCA) Defect & Collapse Directives
+    
+    Loads rule provenance metadata from `rules.yaml` at project root.
     """
 
     def __init__(
@@ -26,6 +28,31 @@ class RulesEngine:
         self.max_permitted_floors = max_permitted_floors
         self.min_column_dim_mm = min_column_dim_mm
         self.alignment_tolerance_mm = alignment_tolerance_mm
+        # Load rule metadata
+        import yaml, pathlib
+        rules_path = pathlib.Path(__file__).resolve().parents[2] / "rules.yaml"
+        if rules_path.is_file():
+            with open(rules_path, "r", encoding="utf-8") as f:
+                raw = yaml.safe_load(f) or []
+            # index by id for quick lookup
+            self.rule_meta: dict = {entry.get("id"): entry for entry in raw}
+        else:
+            self.rule_meta = {}
+
+    def _apply_rule_meta(self, finding: Finding, rule_id: str) -> Finding:
+        """Populate provenance fields on a Finding from loaded metadata if available."""
+        meta = self.rule_meta.get(rule_id)
+        if meta:
+            # Only set fields that exist on the model
+            if "source_document" in meta:
+                finding.source_document = meta.get("source_document")
+            if "clause_reference" in meta:
+                finding.clause_reference = meta.get("clause_reference")
+            if "last_reviewed" in meta:
+                finding.last_reviewed = meta.get("last_reviewed")
+            if "status" in meta:
+                finding.status = meta.get("status")
+        return finding
 
     def evaluate_all(
         self,
@@ -67,30 +94,33 @@ class RulesEngine:
         excess_names = [s["name"] for s in excess_storeys if "name" in s]
         diff = total_storeys - self.max_permitted_floors
 
-        return Finding(
-            id="ERR_STOREY_EXCEEDED",
-            severity=Severity.CRITICAL,
-            title="Zoning Storey Limit Exceeded (Physical Planning Act & County By-Laws)",
-            element_guids=excess_guids,
-            storey_names=excess_names,
-            details=(
-                f"Model contains {total_storeys} storeys, exceeding the County municipal zoning limit "
-                f"of {self.max_permitted_floors} storeys by {diff} unapproved level(s)."
+        return self._apply_rule_meta(
+            Finding(
+                id="ERR_STOREY_EXCEEDED",
+                severity=Severity.CRITICAL,
+                title="Zoning Storey Limit Exceeded (Physical and Land Use Planning Act, 2019 & County By-Laws)",
+                element_guids=excess_guids,
+                storey_names=excess_names,
+                details=(
+                    f"Model contains {total_storeys} storeys, exceeding the County municipal zoning limit "
+                    f"of {self.max_permitted_floors} storeys by {diff} unapproved level(s)."
+                ),
+                structural_risk=(
+                    "Unapproved additional storeys impose massive cumulative dead and live loads exceeding "
+                    "foundation soil bearing capacity and lower-floor column design limits. In Kenya, this "
+                    "illegal vertical extension is the #1 cause of catastrophic progressive pancake collapses "
+                    "(as documented by NCA in the Kasarani, Huruma, and Kinoo disasters)."
+                ),
+                recommendation=(
+                    f"Demolish / remove the {diff} unapproved upper storey(s) ({', '.join(excess_names)}) "
+                    "from architectural and structural BIM drawings or obtain an amended development permit "
+                    "from County Physical Planning supported by re-certified geotechnical and foundation calculations "
+                    "from a registered EBK consulting engineer."
+                ),
+                standard_ref="Physical and Land Use Planning Act, 2019 / County Zoning By-Laws",
+                statutory_action="Issue NCA Section 23 Immediate Stop Work Order & County Revocation of Permit",
             ),
-            structural_risk=(
-                "Unapproved additional storeys impose massive cumulative dead and live loads exceeding "
-                "foundation soil bearing capacity and lower-floor column design limits. In Kenya, this "
-                "illegal vertical extension is the #1 cause of catastrophic progressive pancake collapses "
-                "(as documented by NCA in the Kasarani, Huruma, and Kinoo disasters)."
-            ),
-            recommendation=(
-                f"Demolish / remove the {diff} unapproved upper storey(s) ({', '.join(excess_names)}) "
-                "from architectural and structural BIM drawings or obtain an amended development permit "
-                "from County Physical Planning supported by re-certified geotechnical and foundation calculations "
-                "from a registered EBK consulting engineer."
-            ),
-            standard_ref="Physical and Land Use Planning Act 2019 / County Zoning By-Laws",
-            statutory_action="Issue NCA Section 23 Immediate Stop Work Order & County Revocation of Permit",
+            "ERR_STOREY_EXCEEDED",
         )
 
     def check_column_dimensions(
@@ -114,33 +144,32 @@ class RulesEngine:
         severity = Severity.CRITICAL if is_critical else Severity.WARNING
         code = "ERR_UNDERSIZED_COLUMN" if is_critical else "WARN_UNDERSIZED_COLUMN"
 
-        return [
-            Finding(
-                id=code,
-                severity=severity,
-                title="Undersized Structural Column Cross-Section (KS 04-245 / BS 8110)",
-                element_guids=affected_guids,
-                storey_names=affected_storeys,
-                details=(
-                    f"Found {len(undersized_cols)} column(s) with cross-sectional dimension as small as "
-                    f"{worst_dim:.1f} mm, violating the required minimum of {self.min_column_dim_mm:.1f} mm."
-                ),
-                structural_risk=(
-                    "Sub-standard slender columns (< 200 mm) exhibit elevated slenderness ratios prone to "
-                    "premature Euler buckling and brittle shear crushing under normal axial dead loads. "
-                    "NCA collapse forensic audits repeatedly link 150 mm columns to abrupt, non-ductile building collapses "
-                    "with zero advance deflection warnings."
-                ),
-                recommendation=(
-                    f"Upsize all flagged columns to at least {self.min_column_dim_mm:.0f} mm x "
-                    f"{self.min_column_dim_mm:.0f} mm (minimum 250 mm x 250 mm recommended for multi-storey residential). "
-                    "Re-verify longitudinal high-yield reinforcement bars (Grade 500) and link confinement spacing "
-                    "under BS 8110-1:1997 Cl 3.12 or Eurocode 2 (Kenya National Annex)."
-                ),
-                standard_ref="Kenya Standard KS 04-245 / BS 8110-1:1997 Cl 3.12",
-                statutory_action="Require EBK-Registered Structural Engineer Core Sample Verification & Redesign",
-            )
-        ]
+        finding = Finding(
+            id=code,
+            severity=severity,
+            title="Undersized Structural Column Cross-Section (KS 04-245 / BS 8110)",
+            element_guids=affected_guids,
+            storey_names=affected_storeys,
+            details=(
+                f"Found {len(undersized_cols)} column(s) with cross-sectional dimension as small as "
+                f"{worst_dim:.1f} mm, violating the required minimum of {self.min_column_dim_mm:.1f} mm."
+            ),
+            structural_risk=(
+                "Sub-standard slender columns (< 200 mm) exhibit elevated slenderness ratios prone to "
+                "premature Euler buckling and brittle shear crushing under normal axial dead loads. "
+                "NCA collapse forensic audits repeatedly link 150 mm columns to abrupt, non-ductile building collapses "
+                "with zero advance deflection warnings."
+            ),
+            recommendation=(
+                f"Upsize all flagged columns to at least {self.min_column_dim_mm:.0f} mm x "
+                f"{self.min_column_dim_mm:.0f} mm (minimum 250 mm x 250 mm recommended for multi-storey residential). "
+                "Re-verify longitudinal high-yield reinforcement bars (Grade 500) and link confinement spacing "
+                "under BS 8110-1:1997 Cl 3.12 or Eurocode 2 (Kenya National Annex)."
+            ),
+            standard_ref="Kenya Standard KS 04-245 / BS 8110-1:1997 Cl 3.12",
+            statutory_action="Require EBK-Registered Structural Engineer Core Sample Verification & Redesign",
+        )
+        return [self._apply_rule_meta(finding, code)]
 
     def check_egress_stairs(
         self,
@@ -165,27 +194,30 @@ class RulesEngine:
         total_stairs = len(stairs)
 
         if total_stairs < required_flights or (missing_storeys and len(missing_storeys) > 1):
-            return Finding(
-                id="ERR_MISSING_VERTICAL_EGRESS",
-                severity=Severity.CRITICAL,
-                title="Inadequate or Discontinuous Vertical Stair Egress (Kenya Building Code)",
-                element_guids=[st["global_id"] for st in stairs],
-                storey_names=missing_storeys or storey_names[-1:],
-                details=(
-                    f"Building has {total_storeys} storeys requiring at least {required_flights} "
-                    f"continuous stair flights, but only {total_stairs} stair element(s) were found. "
-                    f"Storeys lacking direct egress connection: {', '.join(missing_storeys) if missing_storeys else 'Upper levels'}."
+            return self._apply_rule_meta(
+                Finding(
+                    id="ERR_MISSING_VERTICAL_EGRESS",
+                    severity=Severity.CRITICAL,
+                    title="Inadequate or Discontinuous Vertical Stair Egress (Kenya Building Code)",
+                    element_guids=[st["global_id"] for st in stairs],
+                    storey_names=missing_storeys or storey_names[-1:],
+                    details=(
+                        f"Building has {total_storeys} storeys requiring at least {required_flights} "
+                        f"continuous stair flights, but only {total_stairs} stair element(s) were found. "
+                        f"Storeys lacking direct egress connection: {', '.join(missing_storeys) if missing_storeys else 'Upper levels'}."
+                    ),
+                    structural_risk=(
+                        "Absence of continuous, protected reinforced concrete stair cores violates the Kenya National Building Code "
+                        "and OSHA 2007. Traps occupants on upper storeys during structural failure or fire evacuation."
+                    ),
+                    recommendation=(
+                        "Extend a minimum 1000 mm wide reinforced concrete egress stair core continuously through all occupied storeys "
+                        "directly down to an unobstructed ground-level exterior discharge exit."
+                    ),
+                    standard_ref="Kenya National Building Code 2024 / Occupational Safety and Health Act (OSHA 2007)",
+                    statutory_action="Non-Compliant Fire Life-Safety Certificate: Development Approval Withheld",
                 ),
-                structural_risk=(
-                    "Absence of continuous, protected reinforced concrete stair cores violates the Kenya National Building Code "
-                    "and OSHA 2007. Traps occupants on upper storeys during structural failure, fire, or seismic events."
-                ),
-                recommendation=(
-                    "Extend a minimum 1000 mm wide reinforced concrete egress stair core continuously through all occupied storeys "
-                    "directly down to an unobstructed ground-level exterior discharge exit."
-                ),
-                standard_ref="Kenya National Building Code 2024 / Occupational Safety and Health Act (OSHA 2007)",
-                statutory_action="Non-Compliant Fire Life-Safety Certificate: Development Approval Withheld",
+                "ERR_MISSING_VERTICAL_EGRESS",
             )
 
         return None
@@ -247,26 +279,29 @@ class RulesEngine:
         floating_guids = [c["global_id"] for c in floating_cols]
         floating_storeys = sorted(list({c.get("storey_name", "Unknown") for c in floating_cols}))
 
-        return Finding(
-            id="ERR_DISCONTINUOUS_COLUMN_LOADPATH",
-            severity=Severity.CRITICAL,
-            title="Discontinuous Column Load Path / Floating Columns (NCA Collapse Risk #1)",
-            element_guids=floating_guids,
-            storey_names=floating_storeys,
-            details=(
-                f"Detected {len(floating_cols)} column(s) on upper storeys with no direct vertical column "
-                f"support below (centroid offset > {self.alignment_tolerance_mm:.0f} mm)."
+        return self._apply_rule_meta(
+            Finding(
+                id="ERR_DISCONTINUOUS_COLUMN_LOADPATH",
+                severity=Severity.CRITICAL,
+                title="Discontinuous Column Load Path / Floating Columns (NCA Collapse Risk #1)",
+                element_guids=floating_guids,
+                storey_names=floating_storeys,
+                details=(
+                    f"Detected {len(floating_cols)} column(s) on upper storeys with no direct vertical column "
+                    f"support below (centroid offset > {self.alignment_tolerance_mm:.0f} mm)."
+                ),
+                structural_risk=(
+                    "Discontinuous columns terminate mid-slab, transferring concentrated vertical loads "
+                    "into bending shear on non-transfer floor diaphragms. In Kenyan residential developments "
+                    "(e.g. Ruiru, Kinoo, Tassia collapses), omitting ground-floor columns for shops or parking "
+                    "without deep transfer girders is the leading trigger of punching shear failure and pancake collapse."
+                ),
+                recommendation=(
+                    "Realign upper-storey columns vertically with the foundation column grid, or introduce a certified, "
+                    "deep reinforced concrete transfer girder engineered and signed by an EBK-registered consulting engineer."
+                ),
+                standard_ref="NCA Collapse Investigation Directive #2024 / BS 8110-1:1997 Sec 3.4",
+                statutory_action="Mandatory Structural Integrity Audit by National Building Inspectorate (NBI)",
             ),
-            structural_risk=(
-                "Discontinuous columns terminate mid-slab, transferring concentrated vertical loads "
-                "into bending shear on non-transfer floor diaphragms. In Kenyan residential developments "
-                "(e.g. Ruiru, Kinoo, Tassia collapses), omitting ground-floor columns for shops or parking "
-                "without deep transfer girders is the leading trigger of punching shear failure and pancake collapse."
-            ),
-            recommendation=(
-                "Realign upper-storey columns vertically with the foundation column grid, or introduce a certified, "
-                "deep reinforced concrete transfer girder engineered and signed by an EBK-registered consulting engineer."
-            ),
-            standard_ref="NCA Collapse Investigation Directive #2024 / BS 8110-1:1997 Sec 3.4",
-            statutory_action="Mandatory Structural Integrity Audit by National Building Inspectorate (NBI)",
+            "ERR_DISCONTINUOUS_COLUMN_LOADPATH",
         )
