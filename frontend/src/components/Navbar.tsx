@@ -34,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `LindaSite-Kenya-Audit-${auditResult.parcel_id.replace(/[^a-zA-Z0-9]/g, '_')}-${auditResult.file_sha256.slice(0, 8)}.json`;
+    a.download = `SiteBeta-Kenya-Audit-${auditResult.parcel_id.replace(/[^a-zA-Z0-9]/g, '_')}-${auditResult.file_sha256.slice(0, 8)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -50,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-extrabold tracking-tight text-slate-900">LindaSite Kenya</span>
+              <span className="text-lg font-extrabold tracking-tight text-slate-900">SiteBeta Kenya</span>
               <span className="text-[10px] font-mono tracking-widest uppercase bg-slate-900 text-white px-2.5 py-0.5 rounded-full font-semibold shadow-2xs">
                 NCA & County Standards
               </span>
@@ -162,25 +162,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="bg-white border border-slate-200 max-w-xl w-full rounded-2xl p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Shield className="w-5 h-5 text-slate-900" />
-              LindaSite Kenya: Preventing Building Collapses
+              SiteBeta Kenya: Preventing Building Collapses
             </h3>
             <p className="text-xs text-slate-600 mt-2 leading-relaxed">
               Following forensic investigations into repeated catastrophic building collapses in Nairobi (Kasarani, Huruma, Tassia),
-              Kiambu (Kinoo, Ruiru), and Mombasa, LindaSite provides an automated, tamper-proof gatekeeper for county planning
+              Kiambu (Kinoo, Ruiru), and Mombasa, SiteBeta provides an automated, tamper-proof gatekeeper for county planning
               authorities, NCA inspectors, and consulting engineers.
             </p>
             <div className="mt-4 space-y-2.5 text-xs text-slate-700">
               <div className="p-3 bg-slate-100 rounded-xl border border-slate-200">
                 <span className="font-bold text-slate-900 block mb-0.5">1. Illegal Storey Additions (NCA Cause #1)</span>
-                Developers obtain permits for 4 floors and stealthily cast 4 extra floors without foundation reinforcement. LindaSite checks IFC spatial storeys against cadastral parcel permits under the <em>Physical and Land Use Planning Act, 2019</em>.
+                Developers obtain permits for 4 floors and stealthily cast 4 extra floors without foundation reinforcement. SiteBeta checks IFC spatial storeys against cadastral parcel permits under the <em>Physical and Land Use Planning Act, 2019</em>.
               </div>
               <div className="p-3 bg-slate-100 rounded-xl border border-slate-200">
                 <span className="font-bold text-slate-900 block mb-0.5">2. Undersized Slender Columns (KS 04-245 / BS 8110)</span>
-                Casting 150 mm columns instead of the required 200 mm+ minimum to cut costs causes sudden Euler buckling under axial dead loads. LindaSite parses profile geometries across all structural columns.
+                Casting 150 mm columns instead of the required 200 mm+ minimum to cut costs causes sudden Euler buckling under axial dead loads. SiteBeta parses profile geometries across all structural columns.
               </div>
               <div className="p-3 bg-slate-100 rounded-xl border border-slate-200">
                 <span className="font-bold text-slate-900 block mb-0.5">3. Floating Columns / Discontinuous Load Paths</span>
-                Omitting ground-floor columns to accommodate parking bays or retail stalls without transfer girders creates fatal punching shear. LindaSite performs 2D centroid proximity checks across consecutive storeys.
+                Omitting ground-floor columns to accommodate parking bays or retail stalls without transfer girders creates fatal punching shear. SiteBeta performs 2D centroid proximity checks across consecutive storeys.
               </div>
               <div className="p-3 bg-slate-100 rounded-xl border border-slate-200">
                 <span className="font-bold text-slate-900 block mb-0.5">4. Continuous Fire Stair Egress</span>

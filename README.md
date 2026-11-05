@@ -1,4 +1,4 @@
-# LindaSite Kenya — BIM/IFC Municipal Code & Structural Safety Engine
+# SiteBeta Kenya — BIM/IFC Municipal Code & Structural Safety Engine
 
 <p align="center">
   <img src="https://img.shields.io/badge/Jurisdiction-Republic%20of%20Kenya-red?style=for-the-badge" alt="Kenya" />
@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/React%2018-TypeScript-61DAFB?style=for-the-badge&logo=react" alt="React" />
 </p>
 
-Following catastrophic residential building collapses across Kenya (**Kasarani**, **Huruma**, **Tassia**, **Kinoo**, and **Ruiru**) triggered by illegal extra floors, undersized slender columns, and unengineered load path alterations, **LindaSite Kenya** provides municipal county building inspectors, National Construction Authority (NCA) quality assurance teams, and consulting structural engineers with an automated, tamper-proof gatekeeper platform to:
+Following catastrophic residential building collapses across Kenya (**Kasarani**, **Huruma**, **Tassia**, **Kinoo**, and **Ruiru**) triggered by illegal extra floors, undersized slender columns, and unengineered load path alterations, **SiteBeta Kenya** provides municipal county building inspectors, National Construction Authority (NCA) quality assurance teams, and consulting structural engineers with an automated, tamper-proof gatekeeper platform to:
 
 1. **Ingest & Fingerprint**: Ingest Industry Foundation Classes (`.ifc`) models exported from **ArchiCAD** or **Revit** and compute an immutable SHA-256 plan fingerprint for tamper-proof provenance.
 2. **Deterministic Kenyan Compliance Rules**:
@@ -61,7 +61,7 @@ cd frontend
 npm install
 npm run dev
 ```
-LindaSite Kenya Console is live at: `http://localhost:5173`
+SiteBeta Kenya Console is live at: `http://localhost:5173`
 
 ---
 

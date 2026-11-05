@@ -22,7 +22,7 @@ def health_check():
     """Health status and ifcopenshell version check."""
     return {
         "status": "healthy",
-        "service": "LindaSite Kenya BIM/IFC Compliance Engine",
+        "service": "SiteBeta Kenya BIM/IFC Compliance Engine",
         "ifcopenshell_version": getattr(ifcopenshell, "__version__", "0.7.0+"),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "market": "Kenya (NCA / NCC Standards)",

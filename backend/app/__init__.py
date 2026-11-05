@@ -1,1 +1,1 @@
-"""LindaSite Backend Application."""
+"""SiteBeta Backend Application."""

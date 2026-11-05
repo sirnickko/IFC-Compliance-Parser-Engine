@@ -1,1 +1,1 @@
-"""LindaSite Backend Tests."""
+"""SiteBeta Backend Tests."""

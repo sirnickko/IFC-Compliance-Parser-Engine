@@ -4,7 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 FIXTURES_DIR = BASE_DIR / "tests" / "fixtures"
 
-PROJECT_NAME = "LindaSite Kenya — BIM/IFC Municipal Code & Structural Safety Engine"
+PROJECT_NAME = "SiteBeta Kenya — BIM/IFC Municipal Code & Structural Safety Engine"
 API_V1_STR = "/api/v1"
 
 env_origins = os.getenv("CORS_ORIGINS")

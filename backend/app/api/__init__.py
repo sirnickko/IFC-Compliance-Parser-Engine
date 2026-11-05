@@ -1,1 +1,1 @@
-"""API endpoints for LindaSite."""
+"""API endpoints for SiteBeta."""

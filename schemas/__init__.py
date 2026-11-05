@@ -1,1 +1,1 @@
-# LindaSite IFC Compliance Schemas
+# SiteBeta IFC Compliance Schemas
