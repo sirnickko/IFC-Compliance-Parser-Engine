@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=PROJECT_NAME,
     version="1.0.0",
-    description="Municipal BIM/IFC Plan Audit, 3D Weakness Spotter & Structural Remediation Engine",
+    description="Local deterministic IFC geometry checks with advisory results; not an official approval.",
     lifespan=lifespan,
 )
 

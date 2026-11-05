@@ -1,4 +1,4 @@
-import { AuditResponse } from '../types/audit';
+import { AuditResponse, MockParcel, VersionDiff } from '../types/audit';
 
 const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 const API_BASE = `${BASE_URL}/api/v1`;
@@ -59,6 +59,27 @@ export async function checkHealth(): Promise<{ status: string; ifcopenshell_vers
   const response = await fetch(`${BASE_URL}/health`);
   if (!response.ok) {
     throw new Error('Backend offline');
+  }
+  return response.json();
+}
+
+export async function loadMockParcels(): Promise<MockParcel[]> {
+  const response = await fetch(`${API_BASE}/parcels`);
+  if (!response.ok) {
+    throw new Error(`Failed to load mock parcel records: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data.parcels;
+}
+
+export async function comparePlans(approvedFile: File, currentFile: File): Promise<VersionDiff> {
+  const formData = new FormData();
+  formData.append('approved_file', approvedFile);
+  formData.append('current_file', currentFile);
+  const response = await fetch(`${API_BASE}/plans/compare`, { method: 'POST', body: formData });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Version comparison failed with status ${response.status}`);
   }
   return response.json();
 }

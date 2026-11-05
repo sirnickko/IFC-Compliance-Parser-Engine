@@ -61,6 +61,19 @@ class AuditSummary(BaseModel):
     overall_status: OverallStatus
 
 
+class CheckStatusValue(str, Enum):
+    PASSED = "Passed"
+    FAILED = "Failed"
+    COULD_NOT_CHECK = "Could not check"
+
+
+class CheckStatus(BaseModel):
+    id: str
+    name: str
+    status: CheckStatusValue
+    detail: str
+
+
 class Element3DGeometry(BaseModel):
     guid: str
     name: str
@@ -69,6 +82,31 @@ class Element3DGeometry(BaseModel):
     position: List[float]  # [x, y, z] in meters
     dimensions: List[float]  # [dx, dy, dz] in meters
     color_hint: Optional[str] = None
+    change_status: Optional[str] = None
+
+
+class ColumnSectionChange(BaseModel):
+    guid: str
+    name: str
+    approved_section_mm: Optional[List[float]] = None
+    current_section_mm: Optional[List[float]] = None
+
+
+class VersionDiff(BaseModel):
+    storeys_added: List[str] = Field(default_factory=list)
+    storeys_removed: List[str] = Field(default_factory=list)
+    columns_added: List[Element3DGeometry] = Field(default_factory=list)
+    columns_removed: List[Element3DGeometry] = Field(default_factory=list)
+    added_elements: List[Element3DGeometry] = Field(default_factory=list)
+    removed_elements: List[Element3DGeometry] = Field(default_factory=list)
+    columns_changed: List[ColumnSectionChange] = Field(default_factory=list)
+    approved_height_m: Optional[float] = None
+    current_height_m: Optional[float] = None
+    height_change_m: Optional[float] = None
+    approved_footprint_area_m2: Optional[float] = None
+    current_footprint_area_m2: Optional[float] = None
+    footprint_change_m2: Optional[float] = None
+    statuses: Dict[str, CheckStatusValue]
 
 
 class AuditResponse(BaseModel):
@@ -82,3 +120,4 @@ class AuditResponse(BaseModel):
     summary: AuditSummary
     findings: List[Finding]
     elements_3d: List[Element3DGeometry] = Field(default_factory=list)
+    checks: List[CheckStatus] = Field(default_factory=list)

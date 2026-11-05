@@ -11,24 +11,28 @@ from ..models.schemas import (
     AuditResponse,
     AuditSummary,
     BuildingMetadata,
+    CheckStatus,
+    CheckStatusValue,
     Element3DGeometry,
     Finding,
     OverallStatus,
     Severity,
     StoreyInfo,
+    VersionDiff,
 )
 from .rules import RulesEngine
 
 
 class IFCAuditor:
     """
-    Core parsing, provenance, 3D geometry extraction, and compliance evaluation engine.
+    Core IFC parsing, provenance, 3D geometry extraction, and advisory checks.
     """
 
     def __init__(self, file_bytes: bytes):
         self.file_bytes = file_bytes
         self.file_sha256 = hashlib.sha256(file_bytes).hexdigest()
         self.model = self._load_model(file_bytes)
+        self.has_length_units = False
         self.unit_to_mm = self._detect_unit_to_mm()
 
     @staticmethod
@@ -53,13 +57,17 @@ class IFCAuditor:
                         if unit.is_a("IfcSIUnit"):
                             prefix = getattr(unit, "Prefix", None)
                             if prefix == "MILLI":
+                                self.has_length_units = True
                                 return 1.0
                             if prefix == "CENTI":
+                                self.has_length_units = True
                                 return 10.0
+                            self.has_length_units = True
                             return 1000.0  # Base metre
                         if unit.is_a("IfcConversionBasedUnit"):
                             factor = unit.ConversionFactor
                             if factor and factor.ValueComponent:
+                                self.has_length_units = True
                                 return float(factor.ValueComponent.wrappedValue) * 1000.0
         except Exception:
             pass
@@ -81,7 +89,7 @@ class IFCAuditor:
             current = getattr(current, "PlacementRelTo", None)
         return x * unit_to_mm, y * unit_to_mm, z * unit_to_mm
 
-    def _extract_column_dimensions(self, column) -> Dict[str, Any]:
+    def _extract_column_dimensions(self, column) -> Optional[Dict[str, Any]]:
         unit_to_mm = self.unit_to_mm
         # Try profile from representation
         rep = column.Representation
@@ -139,8 +147,7 @@ class IFCAuditor:
         if width is not None:
             return {"type": "rectangular", "width_mm": width, "depth_mm": width, "height_mm": 3000.0, "min_dim_mm": width}
 
-        # Default fallback
-        return {"type": "rectangular", "width_mm": 300.0, "depth_mm": 300.0, "height_mm": 3000.0, "min_dim_mm": 300.0}
+        return None
 
     def parse_storeys(self) -> List[Dict[str, Any]]:
         raw_storeys = self.model.by_type("IfcBuildingStorey")
@@ -195,11 +202,12 @@ class IFCAuditor:
                 "x_mm": x_mm,
                 "y_mm": y_mm,
                 "z_mm": z_mm,
-                "width_mm": dims.get("width_mm", 300.0),
-                "depth_mm": dims.get("depth_mm", 300.0),
-                "height_mm": dims.get("height_mm", 3000.0),
-                "min_dimension_mm": dims.get("min_dim_mm", 300.0),
-                "profile_type": dims.get("type", "rectangular"),
+                "has_position": col.ObjectPlacement is not None,
+                "width_mm": dims.get("width_mm") if dims else None,
+                "depth_mm": dims.get("depth_mm") if dims else None,
+                "height_mm": dims.get("height_mm") if dims else None,
+                "min_dimension_mm": dims.get("min_dim_mm") if dims else None,
+                "profile_type": dims.get("type") if dims else None,
             })
 
         return columns
@@ -291,6 +299,8 @@ class IFCAuditor:
 
         # 2. Columns
         for c in columns:
+            if c["width_mm"] is None or c["depth_mm"] is None or c["height_mm"] is None:
+                continue
             w_m = round(c["width_mm"] / 1000.0, 3)
             d_m = round(c["depth_mm"] / 1000.0, 3)
             h_m = round(c["height_mm"] / 1000.0, 3)
@@ -346,12 +356,80 @@ class IFCAuditor:
             min_column_dim_mm=min_column_dim_mm,
         )
         findings = engine.evaluate_all(self.model, storeys, columns, stairs)
+        unknown_columns = sum(1 for c in columns if c["min_dimension_mm"] is None)
+
+        checks = [
+            CheckStatus(
+                id="ERR_STOREY_EXCEEDED",
+                name="Permitted storeys",
+                status=(
+                    CheckStatusValue.COULD_NOT_CHECK if not storeys else
+                    CheckStatusValue.FAILED if any(f.id == "ERR_STOREY_EXCEEDED" for f in findings) else
+                    CheckStatusValue.PASSED
+                ),
+                detail=(
+                    "No building storeys were identified in the IFC."
+                    if not storeys else
+                    f"{len(storeys)} storeys found; mock parcel limit is {max_permitted_floors}."
+                ),
+            ),
+            CheckStatus(
+                id="ENGINEER_REVIEW_COLUMN_SECTION",
+                name="Column section dimensions (engineer review flag)",
+                status=(
+                    CheckStatusValue.COULD_NOT_CHECK
+                ),
+                detail=(
+                    "No columns were identified."
+                    if not columns else
+                    f"Dimensions unavailable for {unknown_columns} of {len(columns)} columns."
+                    if unknown_columns else
+                    "Length units are missing from the IFC."
+                    if not self.has_length_units else
+                    f"Dimensions extracted for {len(columns)} columns. This is an engineer review flag, not a pass/fail rule; thresholds are placeholders."
+                ),
+            ),
+            CheckStatus(
+                id="ERR_MISSING_VERTICAL_EGRESS",
+                name="Stair / vertical egress presence",
+                status=(
+                    CheckStatusValue.COULD_NOT_CHECK if not storeys else
+                    CheckStatusValue.FAILED if any(f.id == "ERR_MISSING_VERTICAL_EGRESS" for f in findings) else
+                    CheckStatusValue.PASSED
+                ),
+                detail=(
+                    "Storey data is unavailable."
+                    if not storeys else
+                    "Egress finding generated; IFC stair representation is only a geometry presence check."
+                    if any(f.id == "ERR_MISSING_VERTICAL_EGRESS" for f in findings) else
+                    "No missing-stair finding was generated by the listed geometry check."
+                ),
+            ),
+            CheckStatus(
+                id="ERR_DISCONTINUOUS_COLUMN_LOADPATH",
+                name="Column alignment (geometry proxy)",
+                status=(
+                    CheckStatusValue.COULD_NOT_CHECK if len(storeys) < 2 or not columns or not all(c["has_position"] for c in columns) or not self.has_length_units else
+                    CheckStatusValue.FAILED if any(f.id == "ERR_DISCONTINUOUS_COLUMN_LOADPATH" for f in findings) else
+                    CheckStatusValue.PASSED
+                ),
+                detail=(
+                    "At least two storeys and located columns are required."
+                    if len(storeys) < 2 or not columns or not all(c["has_position"] for c in columns) or not self.has_length_units else
+                    "Alignment finding generated by centroid proximity; this is not structural load-path verification."
+                    if any(f.id == "ERR_DISCONTINUOUS_COLUMN_LOADPATH" for f in findings) else
+                    "No column alignment exception was detected; this is not structural load-path verification."
+                ),
+            ),
+        ]
 
         critical_count = sum(1 for f in findings if f.severity == Severity.CRITICAL)
         warning_count = sum(1 for f in findings if f.severity == Severity.WARNING)
 
         if critical_count > 0:
             overall_status = OverallStatus.REJECTED
+        elif any(c.status == CheckStatusValue.COULD_NOT_CHECK for c in checks):
+            overall_status = OverallStatus.FLAGGED_FOR_REVIEW
         elif warning_count > 0:
             overall_status = OverallStatus.FLAGGED_FOR_REVIEW
         else:
@@ -393,7 +471,7 @@ class IFCAuditor:
             total_findings=len(findings),
             critical_count=critical_count,
             warning_count=warning_count,
-            passed_checks=max(0, 4 - len(findings)),
+            passed_checks=sum(1 for check in checks if check.status == CheckStatusValue.PASSED),
             overall_status=overall_status,
         )
 
@@ -406,4 +484,5 @@ class IFCAuditor:
             summary=summary,
             findings=findings,
             elements_3d=elements_3d,
+            checks=checks,
         )

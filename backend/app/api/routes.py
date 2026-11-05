@@ -1,9 +1,11 @@
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 import ifcopenshell
+import ifcopenshell.geom
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 
@@ -13,9 +15,80 @@ from ..core.config import (
     FIXTURES_DIR,
 )
 from ..models.schemas import AuditResponse
+from ..models.schemas import CheckStatusValue, VersionDiff
 from ..services.ifc_auditor import IFCAuditor
 
 router = APIRouter()
+MAX_IFC_BYTES = 50 * 1024 * 1024
+MOCK_PARCELS_PATH = Path(__file__).resolve().parents[3] / "mock_parcels.json"
+
+
+async def _read_ifc_upload(file: UploadFile) -> bytes:
+    filename = file.filename or ""
+    if not filename.lower().endswith((".ifc", ".step")):
+        raise HTTPException(status_code=400, detail=f"Unsupported file '{filename}'. Upload an IFC or STEP file.")
+    file_bytes = await file.read(MAX_IFC_BYTES + 1)
+    if len(file_bytes) > MAX_IFC_BYTES:
+        raise HTTPException(status_code=413, detail="IFC file exceeds the 50 MiB upload limit.")
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded IFC file is empty.")
+    if not file_bytes.lstrip().upper().startswith(b"ISO-10303-21;"):
+        raise HTTPException(status_code=422, detail="Malformed IFC/STEP file: expected an ISO-10303-21 header.")
+    return file_bytes
+
+
+def _mock_parcels() -> list[dict]:
+    with open(MOCK_PARCELS_PATH, "r", encoding="utf-8") as parcel_file:
+        return json.load(parcel_file).get("mock_parcels", [])
+
+
+def _length_unit_to_m(model: ifcopenshell.file) -> Optional[float]:
+    try:
+        for assignment in model.by_type("IfcUnitAssignment"):
+            for unit in assignment.Units:
+                if getattr(unit, "UnitType", None) != "LENGTHUNIT":
+                    continue
+                if unit.is_a("IfcSIUnit"):
+                    prefix = getattr(unit, "Prefix", None)
+                    return {"MILLI": 0.001, "CENTI": 0.01}.get(prefix, 1.0)
+                if unit.is_a("IfcConversionBasedUnit"):
+                    factor = unit.ConversionFactor
+                    if factor and factor.ValueComponent:
+                        return float(factor.ValueComponent.wrappedValue)
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return None
+
+
+def _footprint_area_m2(model: ifcopenshell.file) -> Optional[float]:
+    unit_to_m = _length_unit_to_m(model)
+    if unit_to_m is None:
+        return None
+    settings = ifcopenshell.geom.settings()
+    settings.set(settings.USE_WORLD_COORDS, True)
+    areas: list[float] = []
+    for slab in model.by_type("IfcSlab"):
+        try:
+            vertices = ifcopenshell.geom.create_shape(settings, slab).geometry.verts
+        except (RuntimeError, ValueError):
+            continue
+        coords = list(zip(vertices[0::3], vertices[1::3]))
+        if not coords:
+            continue
+        width = max(x for x, _ in coords) - min(x for x, _ in coords)
+        depth = max(y for _, y in coords) - min(y for _, y in coords)
+        area = width * depth
+        if math.isfinite(area) and area > 0:
+            areas.append(area)
+    return round(max(areas) * unit_to_m * unit_to_m, 3) if areas else None
+
+
+def _height_from_storeys(storeys: list[dict]) -> Optional[float]:
+    elevations = sorted(storey["elevation_mm"] for storey in storeys)
+    if len(elevations) < 2:
+        return None
+    average_floor_height = (elevations[-1] - elevations[0]) / (len(elevations) - 1)
+    return round((elevations[-1] - elevations[0] + average_floor_height) / 1000.0, 3)
 
 
 @router.get("/health", tags=["System"])
@@ -23,10 +96,22 @@ def health_check():
     """Health status and ifcopenshell version check."""
     return {
         "status": "healthy",
-        "service": "SiteBeta Kenya BIM/IFC Compliance Engine",
+        "service": "SiteBeta Kenya local IFC geometry review",
         "ifcopenshell_version": getattr(ifcopenshell, "__version__", "0.7.0+"),
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "market": "Kenya (NCA / NCC Standards)",
+        "integration": "Local rule engine; no government connection",
+    }
+
+
+@router.get("/parcels", tags=["Audit"])
+def list_mock_parcels():
+    """Return clearly identified local mock permit records for parcel selection."""
+    return {
+        "is_mock_data": True,
+        "parcels": [
+            {**parcel, "is_mock": True}
+            for parcel in _mock_parcels()
+        ],
     }
 
 
@@ -34,7 +119,7 @@ def health_check():
     "/plans/audit",
     response_model=AuditResponse,
     status_code=status.HTTP_200_OK,
-    summary="Ingest & Audit IFC Plan",
+    summary="Run advisory IFC geometry checks",
     tags=["Audit"],
 )
 async def audit_plan(
@@ -48,44 +133,30 @@ async def audit_plan(
     ),
     min_column_dim_mm: Optional[float] = Form(
         DEFAULT_MIN_COLUMN_DIM_MM,
-        description="Minimum structural column dimension in millimetres (KS 04-245 / BS 8110)",
+        description="Placeholder section dimension for engineer review; not a pass/fail threshold",
     ),
 ) -> AuditResponse:
     """
-    Accepts an IFC building model, computes SHA-256 fingerprint, verifies compliance against
-    Kenyan municipal zoning limits, column cross-sections, continuous vertical stair egress, and
-    column vertical load path alignment.
+    Accept an IFC building model and return local geometry-check findings and explicit
+    data-availability statuses. This endpoint does not issue official compliance decisions.
     """
-    filename = file.filename or ""
-    if not (filename.lower().endswith(".ifc") or filename.lower().endswith(".step")):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid file type '{filename}'. Only .ifc files are supported.",
-        )
-
     try:
-        file_bytes = await file.read()
+        file_bytes = await _read_ifc_upload(file)
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to read uploaded file: {str(e)}",
         )
 
-    if len(file_bytes) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file is empty (0 bytes).",
-        )
-
     # Mock parcel lookup (clearly labeled as mock data — not from an official registry)
-    mock_parcels_path = Path(__file__).resolve().parents[3] / "mock_parcels.json"
-    if mock_parcels_path.is_file():
-        import json as _json
-        with open(mock_parcels_path, "r", encoding="utf-8") as mp:
-            parcels = _json.load(mp).get("mock_parcels", [])
-        match = next((p for p in parcels if p["parcel_id"] == parcel_id), None)
-        if match:
-            max_permitted_floors = match["max_permitted_storeys"]
+    match = next((p for p in _mock_parcels() if p["parcel_id"] == parcel_id), None)
+    if match is None:
+        raise HTTPException(status_code=422, detail="Select a parcel from the mock parcel records; free-typed limits are not used.")
+    max_permitted_floors = match["max_permitted_storeys"]
+    county = match.get("county", county)
+    zoning_zone = match.get("zone", zoning_zone)
 
     try:
         auditor = IFCAuditor(file_bytes)
@@ -98,10 +169,105 @@ async def audit_plan(
         result.zoning_zone = zoning_zone
         return result
     except Exception as exc:
+        if isinstance(exc, ifcopenshell.Error):
+            detail = "Malformed or incomplete IFC model: the IFC parser could not read this file."
+        else:
+            detail = f"Failed to parse or audit IFC model: {str(exc)}"
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Failed to parse or audit IFC model: {str(exc)}",
+            detail=detail,
         )
+
+
+@router.post("/plans/compare", response_model=VersionDiff, tags=["Audit"])
+async def compare_plans(
+    approved_file: UploadFile = File(...),
+    current_file: UploadFile = File(...),
+) -> VersionDiff:
+    approved_bytes = await _read_ifc_upload(approved_file)
+    current_bytes = await _read_ifc_upload(current_file)
+    try:
+        approved = IFCAuditor(approved_bytes)
+        current = IFCAuditor(current_bytes)
+        approved_storeys = approved.parse_storeys()
+        current_storeys = current.parse_storeys()
+        approved_columns = approved.parse_columns(approved_storeys)
+        current_columns = current.parse_columns(current_storeys)
+        approved_stairs = approved.parse_stairs(approved_storeys)
+        current_stairs = current.parse_stairs(current_storeys)
+        approved_elements = approved.extract_3d_elements(approved_storeys, approved_columns, approved_stairs)
+        current_elements = current.extract_3d_elements(current_storeys, current_columns, current_stairs)
+
+        approved_storey_names = {storey["name"] for storey in approved_storeys}
+        current_storey_names = {storey["name"] for storey in current_storeys}
+        approved_by_guid = {column["global_id"]: column for column in approved_columns}
+        current_by_guid = {column["global_id"]: column for column in current_columns}
+        added_guids = current_by_guid.keys() - approved_by_guid.keys()
+        removed_guids = approved_by_guid.keys() - current_by_guid.keys()
+        added = [
+            element.model_copy(update={"change_status": "added", "color_hint": "#16a34a"})
+            for element in current_elements
+            if element.guid in added_guids
+        ]
+        removed = [
+            element.model_copy(update={"change_status": "removed", "color_hint": "#dc2626"})
+            for element in approved_elements
+            if element.guid in removed_guids
+        ]
+        approved_elements_by_guid = {element.guid: element for element in approved_elements}
+        current_elements_by_guid = {element.guid: element for element in current_elements}
+        added_elements = [
+            element.model_copy(update={"change_status": "added", "color_hint": "#16a34a"})
+            for guid, element in current_elements_by_guid.items()
+            if guid not in approved_elements_by_guid
+        ]
+        removed_elements = [
+            element.model_copy(update={"change_status": "removed", "color_hint": "#dc2626"})
+            for guid, element in approved_elements_by_guid.items()
+            if guid not in current_elements_by_guid
+        ]
+        changed = []
+        for guid in current_by_guid.keys() & approved_by_guid.keys():
+            old = approved_by_guid[guid]
+            new = current_by_guid[guid]
+            old_section = (old["width_mm"], old["depth_mm"])
+            new_section = (new["width_mm"], new["depth_mm"])
+            if None not in old_section and None not in new_section and old_section != new_section:
+                changed.append({
+                    "guid": guid,
+                    "name": new["name"],
+                    "approved_section_mm": list(old_section),
+                    "current_section_mm": list(new_section),
+                })
+
+        approved_height = _height_from_storeys(approved_storeys) if approved.has_length_units else None
+        current_height = _height_from_storeys(current_storeys) if current.has_length_units else None
+        approved_area = _footprint_area_m2(approved.model)
+        current_area = _footprint_area_m2(current.model)
+        statuses = {
+            "storeys": CheckStatusValue.PASSED if approved_storeys and current_storeys else CheckStatusValue.COULD_NOT_CHECK,
+            "columns": CheckStatusValue.PASSED if approved_columns and current_columns and approved.has_length_units and current.has_length_units and all(column["min_dimension_mm"] is not None for column in approved_columns + current_columns) else CheckStatusValue.COULD_NOT_CHECK,
+            "height": CheckStatusValue.PASSED if approved_height is not None and current_height is not None and approved.has_length_units and current.has_length_units else CheckStatusValue.COULD_NOT_CHECK,
+            "footprint": CheckStatusValue.PASSED if approved_area is not None and current_area is not None else CheckStatusValue.COULD_NOT_CHECK,
+        }
+        return VersionDiff(
+            storeys_added=sorted(current_storey_names - approved_storey_names),
+            storeys_removed=sorted(approved_storey_names - current_storey_names),
+            columns_added=added,
+            columns_removed=removed,
+            added_elements=added_elements,
+            removed_elements=removed_elements,
+            columns_changed=changed,
+            approved_height_m=approved_height,
+            current_height_m=current_height,
+            height_change_m=round(current_height - approved_height, 3) if approved_height is not None and current_height is not None else None,
+            approved_footprint_area_m2=approved_area,
+            current_footprint_area_m2=current_area,
+            footprint_change_m2=round(current_area - approved_area, 3) if approved_area is not None and current_area is not None else None,
+            statuses=statuses,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Could not compare IFC models: {exc}") from exc
 
 
 @router.get(
@@ -118,7 +284,7 @@ def audit_sample_plan(
     zoning_zone: str = "Nairobi Zone 14 (Kasarani / Pipeline)",
 ) -> AuditResponse:
     """
-    Convenience endpoint for frontend testing and one-click demo:
+    Convenience endpoint for frontend testing with synthetic fixtures:
     sample_name can be 'violating' or 'compliant'.
     """
     clean_name = "violating_building.ifc" if "violat" in sample_name.lower() else "compliant_building.ifc"
@@ -136,13 +302,17 @@ def audit_sample_plan(
         file_bytes = f.read()
 
     auditor = IFCAuditor(file_bytes)
+    parcel_id = "L.R. 209/8402 (Kasarani, Nairobi)"
+    parcel = next((p for p in _mock_parcels() if p["parcel_id"] == parcel_id), None)
+    if parcel is None:
+        raise HTTPException(status_code=500, detail="Synthetic fixture parcel is missing from mock parcel records.")
     result = auditor.audit(
-        parcel_id="L.R. 209/8402 (Kasarani, Nairobi)",
-        max_permitted_floors=max_permitted_floors,
+        parcel_id=parcel_id,
+        max_permitted_floors=parcel["max_permitted_storeys"],
         min_column_dim_mm=min_column_dim_mm,
     )
-    result.county = county
-    result.zoning_zone = zoning_zone
+    result.county = parcel["county"]
+    result.zoning_zone = parcel["zone"]
     return result
 
 

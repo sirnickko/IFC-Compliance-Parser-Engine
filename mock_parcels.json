@@ -2,14 +2,59 @@
   "mock_parcels": [
     {
       "parcel_id": "PARCEL123",
+      "county": "Nairobi City County",
+      "zone": "Nairobi Zone 14 (mock)",
       "max_permitted_storeys": 4,
-      "description": "Mock parcel for testing"
+      "description": "Mock permit record for testing only"
     },
     {
       "parcel_id": "PARCEL456",
+      "county": "Nairobi City County",
+      "zone": "Nairobi Zone 5 (mock)",
       "max_permitted_storeys": 5,
-      "description": "Another mock parcel"
+      "description": "Mock parcel record for testing only"
+    },
+    {
+      "parcel_id": "L.R. 209/8402 (Kasarani)",
+      "county": "Nairobi City County",
+      "zone": "Nairobi Zone 14 (mock)",
+      "max_permitted_storeys": 4,
+      "description": "Synthetic fixture parcel; mock permit record"
+    },
+    {
+      "parcel_id": "L.R. 209/8402 (Kasarani, Nairobi)",
+      "county": "Nairobi City County",
+      "zone": "Nairobi Zone 14 (mock)",
+      "max_permitted_storeys": 4,
+      "description": "Synthetic fixture parcel; mock permit record"
+    },
+    {
+      "parcel_id": "L.R. 209/11204 (Westlands, Nairobi)",
+      "county": "Nairobi City County",
+      "zone": "Nairobi Zone 14 (mock)",
+      "max_permitted_storeys": 4,
+      "description": "Synthetic fixture parcel; mock permit record"
+    },
+    {
+      "parcel_id": "MUNI-PARCEL-100",
+      "county": "Nairobi City County",
+      "zone": "Nairobi mock test zone",
+      "max_permitted_storeys": 4,
+      "description": "Test record; mock data"
+    },
+    {
+      "parcel_id": "ILLEGAL-PARCEL-999",
+      "county": "Nairobi City County",
+      "zone": "Nairobi mock test zone",
+      "max_permitted_storeys": 4,
+      "description": "Test record; mock data"
+    },
+    {
+      "parcel_id": "TEST-PARCEL-2026",
+      "county": "Nairobi City County",
+      "zone": "Nairobi mock test zone",
+      "max_permitted_storeys": 4,
+      "description": "Test record; mock data"
     }
   ]
 }
-
