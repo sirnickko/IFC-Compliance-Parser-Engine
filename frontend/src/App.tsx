@@ -83,7 +83,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100 text-slate-900 font-sans antialiased">
       <Navbar
         onLoadSample={handleLoadSample}
         auditResult={auditResult}
@@ -92,7 +92,7 @@ export const App: React.FC = () => {
       />
 
       <main className="flex-1 flex overflow-hidden">
-        <section className="w-[340px] shrink-0 h-full">
+        <section className="w-[340px] shrink-0 h-full border-r border-slate-200">
           <PlanUploader
             onAudit={handleAudit}
             auditResult={auditResult}
@@ -100,7 +100,7 @@ export const App: React.FC = () => {
           />
         </section>
 
-        <section className="flex-1 h-full relative">
+        <section className="flex-1 h-full relative bg-slate-100">
           <BIMViewer
             ref={bimViewerRef}
             elements={auditResult?.elements_3d || []}
@@ -111,7 +111,7 @@ export const App: React.FC = () => {
           />
         </section>
 
-        <section className="w-[420px] shrink-0 h-full">
+        <section className="w-[420px] shrink-0 h-full border-l border-slate-200">
           <RemediationDrawer
             auditResult={auditResult}
             onLocateElement={handleLocateElement}

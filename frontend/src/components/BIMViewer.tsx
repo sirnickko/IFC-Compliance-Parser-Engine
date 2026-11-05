@@ -83,8 +83,8 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     if (!container) return;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x090d16);
-    scene.fog = new THREE.FogExp2(0x090d16, 0.012);
+    scene.background = new THREE.Color(0xf8fafc);
+    scene.fog = new THREE.FogExp2(0xf8fafc, 0.007);
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(
@@ -102,7 +102,7 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.toneMappingExposure = 1.05;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -116,21 +116,21 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     controls.maxDistance = 150;
     controlsRef.current = controls;
 
-    const hemiLight = new THREE.HemisphereLight(0x38bdf8, 0x0f172a, 0.9);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 1.2);
     scene.add(hemiLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
     dirLight.position.set(centerX + 25, centerY + 40, centerZ + 20);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 1024;
     dirLight.shadow.mapSize.height = 1024;
     scene.add(dirLight);
 
-    const cyanRimLight = new THREE.DirectionalLight(0x06b6d4, 0.6);
-    cyanRimLight.position.set(centerX - 30, centerY + 10, centerZ - 20);
-    scene.add(cyanRimLight);
+    const fillLight = new THREE.DirectionalLight(0x94a3b8, 0.55);
+    fillLight.position.set(centerX - 30, centerY + 10, centerZ - 20);
+    scene.add(fillLight);
 
-    const gridHelper = new THREE.GridHelper(50, 50, 0x0284c7, 0x1e293b);
+    const gridHelper = new THREE.GridHelper(50, 50, 0x94a3b8, 0xe2e8f0);
     gridHelper.position.y = -0.05;
     gridHelper.position.x = centerX;
     gridHelper.position.z = centerZ;
@@ -138,9 +138,9 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
 
     const groundGeo = new THREE.PlaneGeometry(120, 120);
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x070b12,
+      color: 0xf1f5f9,
       roughness: 0.9,
-      metalness: 0.1,
+      metalness: 0.05,
     });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -187,45 +187,45 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     meshMapRef.current.clear();
 
     const defaultConcreteMat = new THREE.MeshStandardMaterial({
-      color: 0xcbd5e1,
+      color: 0xe2e8f0,
       transparent: true,
-      opacity: 0.65,
-      roughness: 0.5,
-      metalness: 0.1,
+      opacity: 0.88,
+      roughness: 0.55,
+      metalness: 0.05,
       wireframe,
     });
 
     const slabMat = new THREE.MeshStandardMaterial({
-      color: 0x475569,
+      color: 0x94a3b8,
       transparent: true,
-      opacity: 0.35,
-      roughness: 0.7,
-      metalness: 0.2,
+      opacity: 0.45,
+      roughness: 0.6,
+      metalness: 0.1,
       wireframe,
     });
 
     const criticalMat = new THREE.MeshStandardMaterial({
-      color: 0xef4444,
-      emissive: 0x7f1d1d,
-      emissiveIntensity: 0.4,
-      roughness: 0.3,
-      metalness: 0.2,
+      color: 0xe11d48,
+      emissive: 0x9f1239,
+      emissiveIntensity: 0.45,
+      roughness: 0.25,
+      metalness: 0.15,
       wireframe,
     });
 
     const warningMat = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      emissive: 0x78350f,
+      color: 0xd97706,
+      emissive: 0xb45309,
       emissiveIntensity: 0.4,
       roughness: 0.3,
-      metalness: 0.2,
+      metalness: 0.15,
       wireframe,
     });
 
     const isolatedDimMat = new THREE.MeshStandardMaterial({
-      color: 0x334155,
+      color: 0xe2e8f0,
       transparent: true,
-      opacity: 0.08,
+      opacity: 0.14,
       wireframe,
     });
 
@@ -233,9 +233,6 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       const isCritical = criticalGuids.has(el.guid);
       const isWarning = warningGuids.has(el.guid);
       const hasViolation = isCritical || isWarning;
-
-      if (isolateViolations && !hasViolation && el.type !== 'IfcBuildingStorey') {
-      }
 
       const [dx, dy, dz] = el.dimensions;
       const [x, y, z] = el.position;
@@ -276,9 +273,9 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       const ceilingHeight = maxPermittedFloors * 3.0;
       const ceilingGeo = new THREE.PlaneGeometry(16, 16);
       const ceilingMat = new THREE.MeshBasicMaterial({
-        color: 0xef4444,
+        color: 0xe11d48,
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.12,
         side: THREE.DoubleSide,
         depthWrite: false,
       });
@@ -288,7 +285,7 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       scene.add(ceiling);
 
       const edges = new THREE.EdgesGeometry(ceilingGeo);
-      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2 }));
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xe11d48, linewidth: 2 }));
       line.rotation.x = Math.PI / 2;
       line.position.set(centerX, ceilingHeight, centerZ);
       scene.add(line);
@@ -335,9 +332,9 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     const origMaterial = mesh.material;
     const pulseMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      emissive: 0xef4444,
-      emissiveIntensity: 1.0,
-      roughness: 0.1,
+      emissive: 0xe11d48,
+      emissiveIntensity: 0.8,
+      roughness: 0.2,
     });
     mesh.material = pulseMat;
     setTimeout(() => {
@@ -393,126 +390,126 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
   };
 
   return (
-    <div className="relative w-full h-full bg-slate-950 flex flex-col overflow-hidden select-none">
+    <div className="relative w-full h-full bg-slate-100 flex flex-col overflow-hidden select-none">
       <div
         ref={mountRef}
         onClick={handleClick}
         className="w-full h-full cursor-grab active:cursor-grabbing outline-none"
       />
 
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 shadow-2xl">
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 p-1.5 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-md">
         <button
           onClick={resetCamera}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition active:scale-95"
+          className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition active:scale-95"
           title="Reset Camera View"
         >
-          <RotateCcw className="w-4 h-4 text-cyan-400" />
+          <RotateCcw className="w-4 h-4 text-slate-700" />
         </button>
 
-        <div className="w-[1px] h-5 bg-slate-800 mx-1" />
+        <div className="w-[1px] h-5 bg-slate-200 mx-1" />
 
         <button
           onClick={() => setIsolateViolations(!isolateViolations)}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition active:scale-95 ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
             isolateViolations
-              ? 'bg-rose-950/80 text-rose-300 border border-rose-700/80'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
           title="Isolate only structural violations"
         >
-          <AlertTriangle className={`w-3.5 h-3.5 ${isolateViolations ? 'text-rose-400' : 'text-slate-400'}`} />
+          <AlertTriangle className={`w-3.5 h-3.5 ${isolateViolations ? 'text-rose-600' : 'text-slate-400'}`} />
           <span>Isolate Violations</span>
         </button>
 
         <button
           onClick={() => setWireframe(!wireframe)}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition active:scale-95 ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
             wireframe
-              ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/80'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
           title="Toggle wireframe rendering"
         >
-          <Box className={`w-3.5 h-3.5 ${wireframe ? 'text-cyan-400' : 'text-slate-400'}`} />
+          <Box className={`w-3.5 h-3.5 ${wireframe ? 'text-blue-600' : 'text-slate-400'}`} />
           <span>Wireframe</span>
         </button>
 
         <button
           onClick={() => setShowZoningCeiling(!showZoningCeiling)}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition active:scale-95 ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
             showZoningCeiling
-              ? 'bg-amber-950/80 text-amber-300 border border-amber-700/80'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              ? 'bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
           title="Toggle zoning permitted height limit plane"
         >
-          <Layers className={`w-3.5 h-3.5 ${showZoningCeiling ? 'text-amber-400' : 'text-slate-400'}`} />
+          <Layers className={`w-3.5 h-3.5 ${showZoningCeiling ? 'text-amber-600' : 'text-slate-400'}`} />
           <span>Zoning Ceiling ({maxPermittedFloors}F)</span>
         </button>
       </div>
 
-      <div className="absolute bottom-4 left-4 z-20 p-3 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 shadow-2xl flex items-center gap-4 text-xs font-mono">
+      <div className="absolute bottom-4 left-4 z-20 p-3 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-md flex items-center gap-4 text-xs font-mono">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-sm bg-rose-500 shadow-sm shadow-rose-500/50" />
-          <span className="text-slate-300">Critical Violation</span>
+          <span className="w-3 h-3 rounded-xs bg-rose-600 shadow-2xs" />
+          <span className="text-slate-700 font-medium">Critical Violation</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-sm bg-amber-500 shadow-sm shadow-amber-500/50" />
-          <span className="text-slate-300">Warning</span>
+          <span className="w-3 h-3 rounded-xs bg-amber-500 shadow-2xs" />
+          <span className="text-slate-700 font-medium">Warning</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-sm bg-slate-300 opacity-65" />
-          <span className="text-slate-300">Compliant Member</span>
+          <span className="w-3 h-3 rounded-xs bg-slate-300 border border-slate-400" />
+          <span className="text-slate-700 font-medium">Compliant Member</span>
         </div>
       </div>
 
       {selectedElement && (
-        <div className="absolute top-4 right-4 z-20 max-w-sm w-full p-4 rounded-xl bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-2xl animate-in fade-in slide-in-from-right-2">
-          <div className="flex items-start justify-between border-b border-slate-800 pb-2 mb-3">
+        <div className="absolute top-4 right-4 z-20 max-w-sm w-full p-4 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-xl animate-in fade-in slide-in-from-right-2">
+          <div className="flex items-start justify-between border-b border-slate-100 pb-2 mb-3">
             <div>
-              <span className="text-[10px] uppercase font-mono tracking-wider text-cyan-400 font-semibold">
+              <span className="text-[10px] uppercase font-mono tracking-wider text-rose-600 font-bold">
                 {selectedElement.type}
               </span>
-              <h4 className="text-sm font-bold text-white tracking-tight">{selectedElement.name}</h4>
+              <h4 className="text-sm font-bold text-slate-900 tracking-tight">{selectedElement.name}</h4>
             </div>
             <button
               onClick={() => setSelectedElement(null)}
-              className="text-slate-500 hover:text-slate-300 text-xs px-1.5 py-0.5 rounded hover:bg-slate-800"
+              className="text-slate-400 hover:text-slate-700 text-xs px-1.5 py-0.5 rounded hover:bg-slate-100"
             >
               ✕
             </button>
           </div>
 
-          <div className="space-y-1.5 text-xs font-mono text-slate-300">
+          <div className="space-y-1.5 text-xs font-mono text-slate-700">
             <div className="flex justify-between">
-              <span className="text-slate-500">GlobalId:</span>
-              <span className="text-cyan-300 text-[11px] truncate max-w-[180px]">{selectedElement.guid}</span>
+              <span className="text-slate-400">GlobalId:</span>
+              <span className="text-slate-800 text-[11px] truncate max-w-[180px] font-medium">{selectedElement.guid}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Storey:</span>
-              <span className="text-slate-200">{selectedElement.storey || 'Unknown'}</span>
+              <span className="text-slate-400">Storey:</span>
+              <span className="text-slate-800 font-medium">{selectedElement.storey || 'Unknown'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Position (x,y,z):</span>
-              <span className="text-slate-200">
+              <span className="text-slate-400">Position (x,y,z):</span>
+              <span className="text-slate-800 font-medium">
                 {selectedElement.position.map((v) => v.toFixed(2)).join(', ')} m
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Dimensions:</span>
-              <span className="text-slate-200">
+              <span className="text-slate-400">Dimensions:</span>
+              <span className="text-slate-800 font-medium">
                 {(selectedElement.dimensions[0] * 1000).toFixed(0)} × {(selectedElement.dimensions[2] * 1000).toFixed(0)} mm
               </span>
             </div>
           </div>
 
           {findings.some((f) => f.element_guids.includes(selectedElement.guid)) && (
-            <div className="mt-3 pt-2.5 border-t border-slate-800">
-              <div className="text-[11px] font-bold text-rose-400 flex items-center gap-1.5 mb-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+            <div className="mt-3 pt-2.5 border-t border-slate-100">
+              <div className="text-[11px] font-bold text-rose-700 flex items-center gap-1.5 mb-1">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
                 Active Structural Violation
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
+              <p className="text-[11px] text-slate-700 leading-snug">
                 {
                   findings.find((f) => f.element_guids.includes(selectedElement.guid))?.title
                 }
