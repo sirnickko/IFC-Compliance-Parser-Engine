@@ -1,101 +1,63 @@
-# SiteBeta Kenya — BIM/IFC Municipal Code & Structural Safety Engine
+# SiteBeta Kenya
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Jurisdiction-Republic%20of%20Kenya-red?style=for-the-badge" alt="Kenya" />
-  <img src="https://img.shields.io/badge/Standard-NCA%20%7C%20KS%2004--245%20%7C%20BS%208110-blue?style=for-the-badge" alt="Standards" />
-  <img src="https://img.shields.io/badge/BIM%2FIFC-ArchiCAD%20%7C%20Revit-green?style=for-the-badge" alt="BIM" />
-  <img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/React%2018-TypeScript-61DAFB?style=for-the-badge&logo=react" alt="React" />
-</p>
+SiteBeta is a local, deterministic IFC geometry review tool. It is not connected to NCA or county systems, does not issue official approvals, and must not be used as a substitute for review by a registered engineer.
 
-Following catastrophic residential building collapses across Kenya (**Kasarani**, **Huruma**, **Tassia**, **Kinoo**, and **Ruiru**) triggered by illegal extra floors, undersized slender columns, and unengineered load path alterations, **SiteBeta Kenya** provides municipal county building inspectors, National Construction Authority (NCA) quality assurance teams, and consulting structural engineers with an automated, tamper-proof gatekeeper platform to:
+## What it checks
 
-1. **Ingest & Fingerprint**: Ingest Industry Foundation Classes (`.ifc`) models exported from **ArchiCAD** or **Revit** and compute an immutable SHA-256 plan fingerprint for tamper-proof provenance.
-2. **Deterministic Kenyan Compliance Rules**:
-   - **Storey Limits vs. County Permits**: *Physical and Land Use Planning Act, 2019* & County Zoning By-Laws (e.g. Nairobi Zone 14 vs Zone 5).
-   - **Column Slenderness**: *Kenya Standard KS 04-245 & BS 8110-1:1997 Cl 3.12* (flags 150 mm rogue columns).
-   - **Vertical Stair Fire Egress**: *Kenya National Building Code 2024* & *OSHA 2007*.
-   - **Column Load-Path Continuity**: Detects floating columns terminated mid-slab without transfer girders (the primary trigger in the Kinoo and Ruiru collapses).
-3. **Interactive 3D WebGL Spotter**: Renders complete structural geometry in Three.js with real-time color-coded highlight overlays (**Red = Critical**, **Amber = Warning**, **Neutral = Compliant**).
-4. **Remediation & Enforcement Console**: Plain-English engineering risk assessment and actionable legal directives (e.g. *NCA Section 23 Stop Work Notice*).
+- IFC storey count against a selected **mock parcel record**.
+- Presence of stair objects and column position alignment as limited geometry proxies.
+- Extractable column section dimensions as an **engineer review flag only**; no minimum-size pass/fail decision is made.
+- Optional comparison of approved and current IFC versions: storeys added/removed, columns added/removed/changed in section size, height changes, and footprint-area changes when geometry supports those calculations.
 
----
+Every check reports **Passed**, **Failed**, or **Could not check**. A missing IFC property is not treated as a pass. Added elements appear green and removed elements appear red in the comparison viewer.
 
-## 4 Kenyan Deterministic Compliance Rules
+## Rule sources and verification status
 
-| Rule Code | Kenyan Standard / Statute | Default Threshold | Collapse Hazard & Forensic Precedent |
+Rule definitions and parameters are in [`rules.yaml`](rules.yaml). The active check identifiers are:
+
+| Rule ID | Source document | Clause reference | Status |
 |---|---|---|---|
-| `ERR_STOREY_EXCEEDED` | *Physical and Land Use Planning Act 2019* / County Zoning By-Laws | Nairobi Zone 14: 4 Storeys | Unapproved extra floors impose massive cumulative dead/live loads that exceed foundation design capacities, risking progressive pancake collapse (Kasarani & Huruma collapses). |
-| `ERR_UNDERSIZED_COLUMN` | *Kenya Standard KS 04-245 / BS 8110-1:1997 Cl 3.12* | 200 mm min section | Slender 150 mm columns suffer from elevated slenderness ratios, causing premature Euler buckling and explosive brittle shear failure under axial service loads. |
-| `ERR_MISSING_VERTICAL_EGRESS` | *Kenya National Building Code 2024* / *OSHA 2007* | All occupied storeys | Absence of continuous reinforced concrete stair cores traps occupants during fire, seismic, or structural evacuation. |
-| `ERR_DISCONTINUOUS_COLUMN_LOADPATH` | *NCA Collapse Directives* / *BS 8110 Sec 3.4* | 500 mm tolerance | Floating columns terminated mid-slab transfer axial gravity into bending moments on non-transfer floor diaphragms, causing punching shear failure (Kinoo & Ruiru collapses). |
+| `ERR_STOREY_EXCEEDED` | County parcel permit record (mock) | TODO: verify applicable planning source | needs_review |
+| `ENGINEER_REVIEW_COLUMN_SECTION` | TODO: document a source for the default and 150/300 mm fixtures | TODO | needs_review |
+| `ERR_MISSING_VERTICAL_EGRESS` | Kenya National Building Code (source requires verification) | TODO | needs_review |
+| `ERR_DISCONTINUOUS_COLUMN_LOADPATH` | TODO: verify source | TODO | needs_review |
 
----
+No clause number is asserted because a verified clause was not supplied. The UI tags findings from these rules as **Unverified rule**. In particular, the 200 mm default and 150 mm / 300 mm example dimensions are placeholders, not approved structural criteria.
 
-## Getting Started
+The correct statute name is **Physical and Land Use Planning Act, 2019**. A statute name alone does not establish that a specific geometry rule or threshold is legally required.
 
-### 1. Prerequisites
-- **Python 3.11+**
-- **Node.js 18+** / **npm 9+**
+## Known limitations
 
-### 2. Backend Setup
-```bash
+- Advisory only. This is not an official approval; structural adequacy must be confirmed by a registered engineer.
+- Geometry proxies do not check structural adequacy, material quality, reinforcement, foundation capacity, site conditions, or construction quality.
+- IFC GlobalIds are used to match elements in a version comparison; exports that regenerate identifiers may appear as removed and added elements.
+- Footprint area is a bounding-box approximation for available IFC slabs. Irregular/curved outlines and footprints split across multiple slabs may be over- or under-estimated; without usable slab geometry the result is **Could not check**.
+- Mock parcel records in [`mock_parcels.json`](mock_parcels.json) are local sample data and are not county records.
+- Uploads are limited to 50 MiB. Malformed files are rejected; incomplete models produce explicit check statuses where possible.
+- The repository currently includes synthetic fixtures only. Three real/open-source IFC sample files could not be added in this environment because external downloads were unavailable; the synthetic fixtures are not represented as real projects.
+
+## Run locally
+
+### Backend
+
+```powershell
 cd backend
 python -m venv .venv
-.venv\Scripts\activate      # Windows
-# or: source .venv/bin/activate # Linux/macOS
-
+.venv\Scripts\activate
 pip install -r requirements.txt
-
-# Run automated tests
-pytest tests/test_audit.py -v
-
-# Start FastAPI backend server
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-API Documentation is live at: `http://localhost:8000/docs`
 
-### 3. Frontend Setup
-```bash
+### Frontend
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
-SiteBeta Kenya Console is live at: `http://localhost:5173`
 
----
+## Tests
 
-## Rule Sources & Known Limitations
+From the repository root, run `pytest backend/tests -q`. The frontend production/type check is `cd frontend; npm run build`.
 
-### Rule Sources
-
-| Rule ID | Source Document | Clause Reference | Status | Last Reviewed |
-|---|---|---|---|---|
-| `ERR_STOREY_EXCEEDED` | Kenyan County Planning Regulation | Section 4.2.1 | Verified | 2024-06-15 |
-| `ERR_UNDERSIZED_COLUMN` | Kenyan Structural Code KS 04-245 | Clause 5.3 | Verified | 2023-12-02 |
-| `WARN_UNDERSIZED_COLUMN` | Kenyan Structural Code KS 04-245 | Clause 5.3 | Verified | 2023-12-02 |
-| `ERR_MISSING_VERTICAL_EGRESS` | Physical and Land Use Planning Act, 2019 | Section 8.5 | Verified | 2024-01-10 |
-| `ERR_DISCONTINUOUS_COLUMN_LOADPATH` | Kenyan Structural Code KS 04-245 | TODO | Needs Review | 2024-03-22 |
-| `ENGINEER_REVIEW_COLUMN_SECTION` | TODO | TODO | Needs Review | 2024-07-01 |
-
-> All rule definitions live in [rules.yaml](rules.yaml) at the project root.
-
-### Known Limitations
-
-- **Advisory only.** This tool does **not** constitute an official government approval. Structural adequacy must be confirmed by a registered engineer (EBK).
-- **Geometry checks only.** The engine checks storey counts, column cross-sections, stair egress presence, and column load-path continuity. It does **not** check structural adequacy, material quality, soil conditions, or seismic loading.
-- **No live government integration.** Labels like "Rule Engine v0.1" reflect a local, deterministic engine - not a connection to NCA or county systems.
-- **Mock parcel data.** The mock_parcels.json file contains placeholder parcel records. In production, these should be sourced from the official county land registry.
-- **Unverified rules.** Rules marked as needs_review in rules.yaml lack a confirmed clause reference. These are displayed with an "Unverified rule" badge in the UI.
-- **Column section minimums (150 mm / 300 mm).** The 150 mm and 300 mm fixtures used in the column dimension check are based on common Kenyan construction practice but need a documented, citable source. They are marked as placeholders.
-
-## Exporting Drawings from ArchiCAD & Revit for Kenya
-
-Kenyan architectural and structural drawings must be exported to IFC:
-* **ArchiCAD** (Standard in Kenya): `File` → `Save As…` → Select format **`IFC 2x3`** or **`IFC 4`**
-* **Autodesk Revit**: `File` → `Export` → **`IFC`**
-
----
-
-## License
-MIT Kenya Municipal Building Safety License.
+All checks run locally. No external API or paid service is used.

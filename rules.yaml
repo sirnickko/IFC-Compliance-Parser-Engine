@@ -1,75 +1,49 @@
-# Rule definitions with provenance metadata
-# Each entry corresponds to a rule used by the compliance engine.
-# Fields: id, name, description, severity, check_type, parameters, source_document, clause_reference, last_reviewed, status
-
+# Active deterministic checks and review flags. Clauses were not supplied by the
+# requester; no clause numbers are asserted until a source has been verified.
 - id: ERR_STOREY_EXCEEDED
-  name: "Storey Limit Exceeded"
-  description: "The building exceeds the permitted number of storeys for the parcel."
-  severity: "CRITICAL"
-  check_type: "rule"
+  name: Permitted storeys
+  description: Compare IFC storey count with the selected mock parcel's permit record.
+  severity: CRITICAL
+  check_type: storey_count
   parameters:
-    max_permitted_storeys: null  # Filled at runtime from parcel data
-  source_document: "Kenyan County Planning Regulation"
-  clause_reference: "Section 4.2.1"
-  last_reviewed: "2024-06-15"
-  status: "verified"
-
-- id: ERR_UNDERSIZED_COLUMN
-  name: "Undersized Column Detected"
-  description: "Column cross‑section area is below the minimum required for its load path."
-  severity: "CRITICAL"
-  check_type: "rule"
-  parameters:
-    min_area_mm2: 1500
-  source_document: "Kenyan Structural Code KS‑04‑245"
-  clause_reference: "Clause 5.3"
-  last_reviewed: "2023-12-02"
-  status: "verified"
-
-- id: WARN_UNDERSIZED_COLUMN
-  name: "Column Below Recommended Size"
-  description: "Column cross‑section area is below the recommended size but still passes minimum code."
-  severity: "WARNING"
-  check_type: "rule"
-  parameters:
-    recommended_area_mm2: 2000
-  source_document: "Kenyan Structural Code KS‑04‑245"
-  clause_reference: "Clause 5.3"
-  last_reviewed: "2023-12-02"
-  status: "verified"
-
-- id: ERR_MISSING_VERTICAL_EGRESS
-  name: "Missing Vertical Egress"
-  description: "No adequate vertical egress paths (stairs or fire escapes) are present on the required storeys."
-  severity: "CRITICAL"
-  check_type: "rule"
-  parameters: {}
-  source_document: "Physical and Land Use Planning Act, 2019"
-  clause_reference: "Section 8.5"
-  last_reviewed: "2024-01-10"
-  status: "verified"
-
-- id: ERR_DISCONTINUOUS_COLUMN_LOADPATH
-  name: "Discontinuous Column Load Path"
-  description: "Columns do not have a continuous load‑path to the foundation."
-  severity: "CRITICAL"
-  check_type: "rule"
-  parameters: {}
-  source_document: "Kenyan Structural Code KS‑04‑245"
-  clause_reference: null  # TODO: add clause reference
-  last_reviewed: "2024-03-22"
-  status: "needs_review"
+    limit_source: mock_parcel_record
+  source_document: County parcel permit record (mock)
+  clause_reference: null # TODO: add a verified clause citation
+  last_reviewed: "2026-11-05"
+  status: needs_review
 
 - id: ENGINEER_REVIEW_COLUMN_SECTION
-  name: "Column Section Minimum – Engineer Review"
-  description: "Minimum column section check – requires engineer review for special cases."
-  severity: "INFO"
-  check_type: "engineer_review"
+  name: Column section dimensions
+  description: Extract dimensions for engineer review; do not make a code pass/fail decision.
+  severity: INFO
+  check_type: engineer_review
   parameters:
-    min_area_mm2: 1500
-    max_area_mm2: 3000
-  source_document: null  # TODO: add source document
-  clause_reference: null  # TODO: add clause reference
-  last_reviewed: "2024-07-01"
-  status: "needs_review"
+    placeholder_minimum_mm: 200
+    fixture_dimensions_mm: [150, 300]
+  source_document: null
+  clause_reference: null # TODO: document a source for the default and 150 mm / 300 mm fixtures
+  last_reviewed: "2026-11-05"
+  status: needs_review
 
+- id: ERR_MISSING_VERTICAL_EGRESS
+  name: Stair / vertical egress presence
+  description: Geometry-only presence check for stair elements across IFC storeys.
+  severity: CRITICAL
+  check_type: egress_presence
+  parameters: {}
+  source_document: Kenya National Building Code (source requires verification)
+  clause_reference: null # TODO: add a verified clause citation
+  last_reviewed: "2026-11-05"
+  status: needs_review
+
+- id: ERR_DISCONTINUOUS_COLUMN_LOADPATH
+  name: Column alignment (geometry proxy)
+  description: Compare column centroid positions between adjacent IFC storeys.
+  severity: CRITICAL
+  check_type: column_alignment
+  parameters:
+    tolerance_mm: 500
+  source_document: null
+  clause_reference: null # TODO: add a verified source and clause citation
+  last_reviewed: "2026-11-05"
+  status: needs_review

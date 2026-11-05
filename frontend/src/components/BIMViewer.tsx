@@ -245,6 +245,10 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       let mat: THREE.Material;
       if (isolateViolations && !hasViolation) {
         mat = isolatedDimMat;
+      } else if (el.change_status === 'added') {
+        mat = new THREE.MeshStandardMaterial({ color: 0x16a34a, emissive: 0x14532d, emissiveIntensity: 0.35 });
+      } else if (el.change_status === 'removed') {
+        mat = new THREE.MeshStandardMaterial({ color: 0xdc2626, transparent: true, opacity: 0.6 });
       } else if (isCritical) {
         mat = criticalMat;
       } else if (isWarning) {
@@ -441,6 +445,13 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
           <span className="w-3 h-3 rounded-xs bg-rose-600 shadow-2xs" />
           <span className="text-slate-700 font-medium">Critical Violation</span>
         </div>
+
+        {elements.some((element) => element.change_status) && (
+          <div className="absolute bottom-20 left-4 z-20 p-2.5 rounded-xl bg-white border border-slate-200 shadow-md flex items-center gap-3 text-xs">
+            <span className="text-green-700 font-semibold">Green: added</span>
+            <span className="text-red-700 font-semibold">Red: removed</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-xs bg-amber-500 shadow-2xs" />
           <span className="text-slate-700 font-medium">Warning</span>

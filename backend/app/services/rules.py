@@ -9,14 +9,9 @@ from ..models.schemas import Finding, Severity
 
 class RulesEngine:
     """
-    Deterministic Kenyan municipal code compliance rules engine for IFC models.
-    Enforces requirements from:
-      - Physical and Land Use Planning Act, 2019 (Act No. 13 of 2019)
-      - Kenya Standard KS 04-245 / BS 8110-1:1997 (Structural Use of Concrete)
-      - Kenya National Building Code 2024
-      - National Construction Authority (NCA) Defect & Collapse Directives
+    Deterministic IFC geometry checks with advisory results.
     
-    Loads rule provenance metadata from `rules.yaml` at project root.
+    Loads rule provenance metadata from `rules.yaml` at the project root.
     """
 
     def __init__(
@@ -30,12 +25,18 @@ class RulesEngine:
         self.alignment_tolerance_mm = alignment_tolerance_mm
         # Load rule metadata
         import yaml, pathlib
-        rules_path = pathlib.Path(__file__).resolve().parents[2] / "rules.yaml"
+        rules_path = pathlib.Path(__file__).resolve().parents[3] / "rules.yaml"
         if rules_path.is_file():
             with open(rules_path, "r", encoding="utf-8") as f:
                 raw = yaml.safe_load(f) or []
             # index by id for quick lookup
             self.rule_meta: dict = {entry.get("id"): entry for entry in raw}
+            alignment_params = self.rule_meta.get(
+                "ERR_DISCONTINUOUS_COLUMN_LOADPATH", {}
+            ).get("parameters", {})
+            self.alignment_tolerance_mm = alignment_params.get(
+                "tolerance_mm", alignment_tolerance_mm
+            )
         else:
             self.rule_meta = {}
 
@@ -67,8 +68,8 @@ class RulesEngine:
         if storey_finding:
             findings.append(storey_finding)
 
-        col_findings = self.check_column_dimensions(model, columns)
-        findings.extend(col_findings)
+        # Column dimensions remain an engineer-review flag: the placeholder thresholds
+        # are not a verified pass/fail criterion.
 
         stair_finding = self.check_egress_stairs(model, storeys, stairs)
         if stair_finding:
@@ -98,78 +99,23 @@ class RulesEngine:
             Finding(
                 id="ERR_STOREY_EXCEEDED",
                 severity=Severity.CRITICAL,
-                title="Zoning Storey Limit Exceeded (Physical and Land Use Planning Act, 2019 & County By-Laws)",
+                title="Mock parcel permitted storey count exceeded",
                 element_guids=excess_guids,
                 storey_names=excess_names,
                 details=(
                     f"Model contains {total_storeys} storeys, exceeding the County municipal zoning limit "
                     f"of {self.max_permitted_floors} storeys by {diff} unapproved level(s)."
                 ),
-                structural_risk=(
-                    "Unapproved additional storeys impose massive cumulative dead and live loads exceeding "
-                    "foundation soil bearing capacity and lower-floor column design limits. In Kenya, this "
-                    "illegal vertical extension is the #1 cause of catastrophic progressive pancake collapses "
-                    "(as documented by NCA in the Kasarani, Huruma, and Kinoo disasters)."
-                ),
+                structural_risk="Additional storeys increase cumulative gravity loads. This geometry check does not determine structural adequacy.",
                 recommendation=(
-                    f"Demolish / remove the {diff} unapproved upper storey(s) ({', '.join(excess_names)}) "
-                    "from architectural and structural BIM drawings or obtain an amended development permit "
-                    "from County Physical Planning supported by re-certified geotechnical and foundation calculations "
-                    "from a registered EBK consulting engineer."
+                    "Confirm the applicable permit record with the county and request review by a registered engineer. "
+                    "This advisory geometry check does not determine legal compliance or structural adequacy."
                 ),
-                standard_ref="Physical and Land Use Planning Act, 2019 / County Zoning By-Laws",
-                statutory_action="Issue NCA Section 23 Immediate Stop Work Order & County Revocation of Permit",
+                standard_ref="Mock parcel record; planning source requires verification",
+                statutory_action="Advisory only: refer permit questions to the relevant county authority.",
             ),
             "ERR_STOREY_EXCEEDED",
         )
-
-    def check_column_dimensions(
-        self, model: ifcopenshell.file, columns: List[Dict[str, Any]]
-    ) -> List[Finding]:
-        undersized_cols: List[Dict[str, Any]] = []
-
-        for col in columns:
-            min_dim = col.get("min_dimension_mm")
-            if min_dim is not None and min_dim < self.min_column_dim_mm:
-                undersized_cols.append(col)
-
-        if not undersized_cols:
-            return []
-
-        affected_guids = [c["global_id"] for c in undersized_cols]
-        affected_storeys = sorted(list({c.get("storey_name", "Unknown") for c in undersized_cols}))
-        worst_dim = min((c.get("min_dimension_mm", 0.0) for c in undersized_cols), default=0.0)
-
-        is_critical = worst_dim < (self.min_column_dim_mm * 0.9)
-        severity = Severity.CRITICAL if is_critical else Severity.WARNING
-        code = "ERR_UNDERSIZED_COLUMN" if is_critical else "WARN_UNDERSIZED_COLUMN"
-
-        finding = Finding(
-            id=code,
-            severity=severity,
-            title="Undersized Structural Column Cross-Section (KS 04-245 / BS 8110)",
-            element_guids=affected_guids,
-            storey_names=affected_storeys,
-            details=(
-                f"Found {len(undersized_cols)} column(s) with cross-sectional dimension as small as "
-                f"{worst_dim:.1f} mm, violating the required minimum of {self.min_column_dim_mm:.1f} mm."
-            ),
-            structural_risk=(
-                "Sub-standard slender columns (< 200 mm) exhibit elevated slenderness ratios prone to "
-                "premature Euler buckling and brittle shear crushing under normal axial dead loads. "
-                "NCA collapse forensic audits repeatedly link 150 mm columns to abrupt, non-ductile building collapses "
-                "with zero advance deflection warnings."
-            ),
-            recommendation=(
-                f"Upsize all flagged columns to at least {self.min_column_dim_mm:.0f} mm x "
-                f"{self.min_column_dim_mm:.0f} mm (minimum 250 mm x 250 mm recommended for multi-storey residential). "
-                "Re-verify longitudinal high-yield reinforcement bars (Grade 500) and link confinement spacing "
-                "under BS 8110-1:1997 Cl 3.12 or Eurocode 2 (Kenya National Annex)."
-            ),
-            standard_ref="Kenya Standard KS 04-245 / BS 8110-1:1997 Cl 3.12",
-            statutory_action="Require EBK-Registered Structural Engineer Core Sample Verification & Redesign",
-        )
-        return [self._apply_rule_meta(finding, code)]
 
     def check_egress_stairs(
         self,
@@ -206,10 +152,7 @@ class RulesEngine:
                         f"continuous stair flights, but only {total_stairs} stair element(s) were found. "
                         f"Storeys lacking direct egress connection: {', '.join(missing_storeys) if missing_storeys else 'Upper levels'}."
                     ),
-                    structural_risk=(
-                        "Absence of continuous, protected reinforced concrete stair cores violates the Kenya National Building Code "
-                        "and OSHA 2007. Traps occupants on upper storeys during structural failure or fire evacuation."
-                    ),
+                    structural_risk="The IFC geometry check detects stair element presence only; it does not assess egress adequacy.",
                     recommendation=(
                         "Extend a minimum 1000 mm wide reinforced concrete egress stair core continuously through all occupied storeys "
                         "directly down to an unobstructed ground-level exterior discharge exit."
@@ -290,18 +233,13 @@ class RulesEngine:
                     f"Detected {len(floating_cols)} column(s) on upper storeys with no direct vertical column "
                     f"support below (centroid offset > {self.alignment_tolerance_mm:.0f} mm)."
                 ),
-                structural_risk=(
-                    "Discontinuous columns terminate mid-slab, transferring concentrated vertical loads "
-                    "into bending shear on non-transfer floor diaphragms. In Kenyan residential developments "
-                    "(e.g. Ruiru, Kinoo, Tassia collapses), omitting ground-floor columns for shops or parking "
-                    "without deep transfer girders is the leading trigger of punching shear failure and pancake collapse."
-                ),
+                structural_risk="Column alignment is a geometry proxy and does not establish a continuous structural load path.",
                 recommendation=(
                     "Realign upper-storey columns vertically with the foundation column grid, or introduce a certified, "
                     "deep reinforced concrete transfer girder engineered and signed by an EBK-registered consulting engineer."
                 ),
                 standard_ref="NCA Collapse Investigation Directive #2024 / BS 8110-1:1997 Sec 3.4",
-                statutory_action="Mandatory Structural Integrity Audit by National Building Inspectorate (NBI)",
+                statutory_action="Advisory only: request assessment by a registered structural engineer.",
             ),
             "ERR_DISCONTINUOUS_COLUMN_LOADPATH",
         )

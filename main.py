@@ -20,9 +20,8 @@ app = FastAPI(
     title="SiteBeta IFC Compliance Engine",
     version="1.0.0",
     description=(
-        "Automated BIM / IFC building-code compliance parser engine. "
-        "Ingests IFC files, executes deterministic municipal compliance "
-        "rules, and returns an auditable JSON compliance certificate."
+        "Local BIM / IFC geometry checks with deterministic, advisory results. "
+        "This service is not connected to government systems and does not issue approvals."
     ),
 )
 
@@ -58,8 +57,8 @@ async def audit_ifc(
     ),
 ) -> ComplianceCertificate:
     """
-    Ingest an ``.ifc`` file, run all compliance rules, and return
-    a signed compliance certificate.
+    Ingest an ``.ifc`` file, run geometry checks, and return
+    an advisory geometry check report.
     """
     file_bytes = await file.read()
     if not file_bytes:
