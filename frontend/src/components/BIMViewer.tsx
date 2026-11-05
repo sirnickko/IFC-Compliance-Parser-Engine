@@ -188,19 +188,15 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
 
     const defaultConcreteMat = new THREE.MeshStandardMaterial({
       color: 0xe2e8f0,
-      transparent: true,
-      opacity: 0.88,
-      roughness: 0.55,
+      roughness: 0.6,
       metalness: 0.05,
       wireframe,
     });
 
     const slabMat = new THREE.MeshStandardMaterial({
-      color: 0x94a3b8,
-      transparent: true,
-      opacity: 0.45,
-      roughness: 0.6,
-      metalness: 0.1,
+      color: 0xcbd5e1,
+      roughness: 0.65,
+      metalness: 0.05,
       wireframe,
     });
 
@@ -223,9 +219,9 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
     });
 
     const isolatedDimMat = new THREE.MeshStandardMaterial({
-      color: 0xe2e8f0,
+      color: 0xf1f5f9,
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.2,
       wireframe,
     });
 
@@ -271,25 +267,17 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
 
     if (showZoningCeiling && elements.length > 0) {
       const ceilingHeight = maxPermittedFloors * 3.0;
-      const ceilingGeo = new THREE.PlaneGeometry(16, 16);
-      const ceilingMat = new THREE.MeshBasicMaterial({
-        color: 0xe11d48,
-        transparent: true,
-        opacity: 0.12,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      });
-      const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
-      ceiling.rotation.x = Math.PI / 2;
-      ceiling.position.set(centerX, ceilingHeight, centerZ);
-      scene.add(ceiling);
+      const ceilingGrid = new THREE.GridHelper(16, 8, 0x1e293b, 0x64748b);
+      ceilingGrid.position.set(centerX, ceilingHeight, centerZ);
+      scene.add(ceilingGrid);
 
+      const ceilingGeo = new THREE.PlaneGeometry(16, 16);
       const edges = new THREE.EdgesGeometry(ceilingGeo);
-      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xe11d48, linewidth: 2 }));
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x1e293b, linewidth: 2 }));
       line.rotation.x = Math.PI / 2;
       line.position.set(centerX, ceilingHeight, centerZ);
       scene.add(line);
-      meshMapRef.current.set('__zoning_ceiling__', ceiling);
+      meshMapRef.current.set('__zoning_ceiling__', ceilingGrid as any);
       meshMapRef.current.set('__zoning_border__', line as any);
     }
   }, [elements, findings, wireframe, isolateViolations, showZoningCeiling]);
@@ -412,12 +400,12 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
           onClick={() => setIsolateViolations(!isolateViolations)}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
             isolateViolations
-              ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs'
+              ? 'bg-slate-900 text-white border border-slate-800 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
           title="Isolate only structural violations"
         >
-          <AlertTriangle className={`w-3.5 h-3.5 ${isolateViolations ? 'text-rose-600' : 'text-slate-400'}`} />
+          <AlertTriangle className={`w-3.5 h-3.5 ${isolateViolations ? 'text-rose-400' : 'text-slate-400'}`} />
           <span>Isolate Violations</span>
         </button>
 
@@ -425,12 +413,12 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
           onClick={() => setWireframe(!wireframe)}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
             wireframe
-              ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs'
+              ? 'bg-slate-900 text-white border border-slate-800 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
           title="Toggle wireframe rendering"
         >
-          <Box className={`w-3.5 h-3.5 ${wireframe ? 'text-blue-600' : 'text-slate-400'}`} />
+          <Box className={`w-3.5 h-3.5 ${wireframe ? 'text-slate-200' : 'text-slate-400'}`} />
           <span>Wireframe</span>
         </button>
 
@@ -438,17 +426,17 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
           onClick={() => setShowZoningCeiling(!showZoningCeiling)}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 ${
             showZoningCeiling
-              ? 'bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs'
+              ? 'bg-slate-900 text-white border border-slate-800 shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
           title="Toggle zoning permitted height limit plane"
         >
-          <Layers className={`w-3.5 h-3.5 ${showZoningCeiling ? 'text-amber-600' : 'text-slate-400'}`} />
+          <Layers className={`w-3.5 h-3.5 ${showZoningCeiling ? 'text-slate-200' : 'text-slate-400'}`} />
           <span>Zoning Ceiling ({maxPermittedFloors}F)</span>
         </button>
       </div>
 
-      <div className="absolute bottom-4 left-4 z-20 p-3 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-md flex items-center gap-4 text-xs font-mono">
+      <div className="absolute bottom-4 left-4 z-20 p-3 rounded-xl bg-white border border-slate-200 shadow-md flex items-center gap-4 text-xs font-mono">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-xs bg-rose-600 shadow-2xs" />
           <span className="text-slate-700 font-medium">Critical Violation</span>
@@ -464,10 +452,10 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
       </div>
 
       {selectedElement && (
-        <div className="absolute top-4 right-4 z-20 max-w-sm w-full p-4 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-xl animate-in fade-in slide-in-from-right-2">
+        <div className="absolute top-4 right-4 z-20 max-w-sm w-full p-4 rounded-xl bg-white border border-slate-200 shadow-xl animate-in fade-in slide-in-from-right-2">
           <div className="flex items-start justify-between border-b border-slate-100 pb-2 mb-3">
             <div>
-              <span className="text-[10px] uppercase font-mono tracking-wider text-rose-600 font-bold">
+              <span className="text-[10px] uppercase font-mono tracking-wider text-slate-900 font-bold">
                 {selectedElement.type}
               </span>
               <h4 className="text-sm font-bold text-slate-900 tracking-tight">{selectedElement.name}</h4>
@@ -504,12 +492,12 @@ export const BIMViewer = forwardRef<BIMViewerRef, BIMViewerProps>(({
           </div>
 
           {findings.some((f) => f.element_guids.includes(selectedElement.guid)) && (
-            <div className="mt-3 pt-2.5 border-t border-slate-100">
-              <div className="text-[11px] font-bold text-rose-700 flex items-center gap-1.5 mb-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+            <div className="mt-3 p-2.5 rounded-lg bg-slate-900 text-white border border-slate-800 shadow-xs">
+              <div className="text-[11px] font-bold text-rose-400 flex items-center gap-1.5 mb-1">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
                 Active Structural Violation
               </div>
-              <p className="text-[11px] text-slate-700 leading-snug">
+              <p className="text-[11px] text-slate-300 leading-snug">
                 {
                   findings.find((f) => f.element_guids.includes(selectedElement.guid))?.title
                 }

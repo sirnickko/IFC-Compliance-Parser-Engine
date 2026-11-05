@@ -153,8 +153,8 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-r border-slate-200 p-5 overflow-y-auto">
       <div className="flex items-center gap-2.5 mb-4">
-        <div className="p-2 bg-rose-50 text-rose-600 rounded-lg border border-rose-100">
-          <ShieldAlert className="w-5 h-5 text-rose-600" />
+        <div className="p-2 bg-slate-900 text-white rounded-lg border border-slate-800 shadow-xs">
+          <ShieldAlert className="w-5 h-5 text-white" />
         </div>
         <div>
           <h2 className="text-sm font-bold text-slate-900 tracking-tight">Kenya Municipal Ingestion</h2>
@@ -164,10 +164,10 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-4 flex-1 flex flex-col">
         {/* Kenyan Disaster Collapse Profiles */}
-        <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+        <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 space-y-2">
+          <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider flex items-center justify-between">
             <span>Kenyan Case Profiles</span>
-            <span className="text-[9px] text-slate-600 font-mono font-medium">1-Click Test</span>
+            <span className="text-[9px] text-slate-500 font-mono font-medium">1-Click Test</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -189,13 +189,13 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
                 } as any);
               }}
               disabled={isLoading}
-              className="p-2.5 rounded-lg bg-rose-50/70 hover:bg-rose-50 border border-rose-200/90 hover:border-rose-300 text-left transition group active:scale-95 disabled:opacity-50 shadow-2xs"
+              className="p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-left transition group active:scale-95 disabled:opacity-50 shadow-xs text-white"
             >
-              <div className="text-[10px] font-bold text-rose-800 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              <div className="text-[10px] font-bold text-white flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                 Kasarani Profile
               </div>
-              <div className="text-[9px] text-slate-600 mt-0.5 font-mono">8F (+4 illegal) • 150mm col</div>
+              <div className="text-[9px] text-slate-400 mt-0.5 font-mono">8F (+4 illegal) • 150mm col</div>
             </button>
 
             <button
@@ -217,13 +217,13 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
                 } as any);
               }}
               disabled={isLoading}
-              className="p-2.5 rounded-lg bg-emerald-50/70 hover:bg-emerald-50 border border-emerald-200/90 hover:border-emerald-300 text-left transition group active:scale-95 disabled:opacity-50 shadow-2xs"
+              className="p-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-left transition group active:scale-95 disabled:opacity-50 shadow-xs text-white"
             >
-              <div className="text-[10px] font-bold text-emerald-800 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <div className="text-[10px] font-bold text-white flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 Compliant Block
               </div>
-              <div className="text-[9px] text-slate-600 mt-0.5 font-mono">4F • 300mm col • Dual stairs</div>
+              <div className="text-[9px] text-slate-400 mt-0.5 font-mono">4F • 300mm col • Dual stairs</div>
             </button>
           </div>
         </div>
@@ -237,10 +237,10 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
           onClick={() => fileInputRef.current?.click()}
           className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
             isDragging
-              ? 'border-blue-500 bg-blue-50/50 scale-[0.99]'
+              ? 'border-slate-800 bg-slate-100 scale-[0.99]'
               : selectedFile
-              ? 'border-emerald-400 bg-emerald-50/40 shadow-xs'
-              : 'border-slate-300 bg-slate-50/70 hover:bg-white hover:border-slate-400 shadow-2xs'
+              ? 'border-slate-800 bg-slate-100 shadow-xs'
+              : 'border-slate-300 bg-slate-50 hover:bg-white hover:border-slate-400 shadow-2xs'
           }`}
         >
           <input
@@ -253,10 +253,10 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
 
           {selectedFile ? (
             <div className="space-y-2">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto ring-1 ring-emerald-300">
-                <FileCheck className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center mx-auto shadow-xs">
+                <FileCheck className="w-6 h-6 text-white" />
               </div>
-              <p className="text-xs font-semibold text-emerald-800 break-all max-w-[220px]">
+              <p className="text-xs font-semibold text-slate-900 break-all max-w-[220px]">
                 {selectedFile.name}
               </p>
               <p className="text-[10px] text-slate-500 font-mono">
@@ -270,7 +270,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-800">
-                  <span className="text-rose-600">Upload IFC Model</span> (ArchiCAD / Revit)
+                  <span>Upload IFC Model</span> (ArchiCAD / Revit)
                 </p>
                 <p className="text-[10px] text-slate-500 mt-1 font-mono">
                   Supported formats: IFC 2X3, IFC 4 (.ifc, .step)
@@ -281,8 +281,8 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
         </div>
 
         {errorMessage && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-start gap-2 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 flex items-start gap-2 animate-in fade-in shadow-xs">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
@@ -298,7 +298,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
             <select
               value={selectedZoneKey}
               onChange={(e) => handleZoneChange(e.target.value)}
-              className="w-full bg-white border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-800 outline-none transition shadow-2xs"
+              className="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-800 outline-none transition shadow-2xs"
             >
               {Object.entries(KENYAN_ZONES).map(([key, item]) => (
                 <option key={key} value={key} className="text-slate-900">
@@ -320,7 +320,7 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
               value={parcelId}
               onChange={(e) => setParcelId(e.target.value)}
               placeholder="e.g. L.R. 209/8402 (Nairobi) or RUIRU/BLOCK 2/451"
-              className="w-full bg-white border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 placeholder:text-slate-400 outline-none transition shadow-2xs"
+              className="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 placeholder:text-slate-400 outline-none transition shadow-2xs"
             />
           </div>
 
@@ -338,14 +338,14 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
                 required
                 value={maxPermittedFloors}
                 onChange={(e) => setMaxPermittedFloors(parseInt(e.target.value) || 1)}
-                className="w-full bg-white border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 outline-none transition shadow-2xs"
+                className="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 outline-none transition shadow-2xs"
               />
               <span className="absolute right-3 top-2 text-[11px] font-mono text-slate-400">
                 floors max
               </span>
             </div>
             <p className="text-[10px] text-slate-500 mt-1">
-              Physical Planning Act 2019: Extra floors trigger <span className="text-rose-600 font-mono font-medium">ERR_STOREY_EXCEEDED</span>.
+              Physical Planning Act 2019: Extra floors trigger <span className="text-slate-800 font-mono font-bold">ERR_STOREY_EXCEEDED</span>.
             </p>
           </div>
 
@@ -364,14 +364,14 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
                 required
                 value={minColumnDimMm}
                 onChange={(e) => setMinColumnDimMm(parseFloat(e.target.value) || 100)}
-                className="w-full bg-white border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 outline-none transition shadow-2xs"
+                className="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 outline-none transition shadow-2xs"
               />
               <span className="absolute right-3 top-2 text-[11px] font-mono text-slate-400">
                 mm
               </span>
             </div>
             <p className="text-[10px] text-slate-500 mt-1">
-              Columns below 200 mm trigger <span className="text-rose-600 font-mono font-medium">ERR_UNDERSIZED_COLUMN</span>.
+              Columns below 200 mm trigger <span className="text-slate-800 font-mono font-bold">ERR_UNDERSIZED_COLUMN</span>.
             </p>
           </div>
         </div>
