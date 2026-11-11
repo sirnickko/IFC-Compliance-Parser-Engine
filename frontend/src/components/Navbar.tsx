@@ -7,6 +7,8 @@ import {
   Server,
   Zap,
   Info,
+  Map as MapIcon,
+  Box,
 } from 'lucide-react';
 import { AuditResponse, VersionDiff } from '../types/audit';
 
@@ -16,6 +18,8 @@ interface NavbarProps {
   backendHealthy: boolean;
   isLoading: boolean;
   versionDiff: VersionDiff | null;
+  activeView: 'audit' | 'map';
+  onViewChange: (view: 'audit' | 'map') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,6 +28,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   backendHealthy,
   isLoading,
   versionDiff,
+  activeView,
+  onViewChange,
 }) => {
   const [showSampleDropdown, setShowSampleDropdown] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -71,6 +77,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+            <button type="button" onClick={() => onViewChange('audit')} aria-pressed={activeView === 'audit'} className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ${activeView === 'audit' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>
+              <Box className="h-3.5 w-3.5" />3D / Audit
+            </button>
+            <button type="button" onClick={() => onViewChange('map')} aria-pressed={activeView === 'map'} className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ${activeView === 'map' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}>
+              <MapIcon className="h-3.5 w-3.5" />Map
+            </button>
+          </div>
           <div
             className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs shadow-2xs"
             title="Local rule engine v0.1 (not connected to government systems)"

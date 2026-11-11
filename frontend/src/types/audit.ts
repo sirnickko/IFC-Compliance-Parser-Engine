@@ -90,6 +90,7 @@ export interface VersionDiff {
 }
 
 export interface AuditResponse {
+  audit_id?: string | null;
   file_sha256: string;
   parcel_id: string;
   county?: string;
@@ -115,10 +116,11 @@ export interface AuditFormValues {
 }
 
 export interface MockParcel {
-  parcel_id: string;
+  id: string;
+  lr_number: string;
   county: string;
   zone: string;
-  max_permitted_storeys: number;
-  description: string;
-  is_mock: true;
+  permitted_storeys: number;
+  source: 'MOCK DEMO DATA';
+  last_updated: string;
 }

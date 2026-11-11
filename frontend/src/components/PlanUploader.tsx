@@ -29,13 +29,13 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const selectedParcel = parcels.find((parcel) => parcel.parcel_id === selectedParcelId);
+  const selectedParcel = parcels.find((parcel) => parcel.id === selectedParcelId);
 
   useEffect(() => {
     loadMockParcels()
       .then((records) => {
         setParcels(records);
-        if (records.length) setSelectedParcelId(records[0].parcel_id);
+        if (records.length) setSelectedParcelId(records[0].id);
       })
       .catch((error: Error) => setErrorMessage(error.message));
   }, []);
@@ -74,10 +74,10 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
         return;
       }
       await onAudit({
-        parcelId: selectedParcel.parcel_id,
+        parcelId: selectedParcel.id,
         county: selectedParcel.county,
         zoningZone: selectedParcel.zone,
-        maxPermittedFloors: selectedParcel.max_permitted_storeys,
+        maxPermittedFloors: selectedParcel.permitted_storeys,
         minColumnDimMm: 200,
         file: selectedFile,
       });
@@ -113,10 +113,10 @@ export const PlanUploader: React.FC<PlanUploaderProps> = ({
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-700 mb-1">Mock parcel permit record</label>
               <select value={selectedParcelId} onChange={(event) => setSelectedParcelId(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs">
-                {parcels.map((parcel) => <option key={parcel.parcel_id} value={parcel.parcel_id}>{parcel.parcel_id} — {parcel.zone}</option>)}
+                {parcels.map((parcel) => <option key={parcel.id} value={parcel.id}>{parcel.lr_number} — {parcel.zone}</option>)}
               </select>
               <p className="mt-1 text-[10px] text-amber-700">Mock data, not an official county permit. Permitted storeys are taken from this record.</p>
-              {selectedParcel && <p className="mt-1 text-xs text-slate-700">{selectedParcel.max_permitted_storeys} storeys · {selectedParcel.county}</p>}
+              {selectedParcel && <p className="mt-1 text-xs text-slate-700">{selectedParcel.permitted_storeys} storeys · {selectedParcel.county}</p>}
             </div>
 
             <div

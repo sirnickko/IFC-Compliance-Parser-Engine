@@ -4,7 +4,8 @@ import { PlanUploader } from './components/PlanUploader';
 import { BIMViewer, BIMViewerRef } from './components/BIMViewer';
 import { RemediationDrawer } from './components/RemediationDrawer';
 import { AuditFormValues, AuditResponse, Element3DGeometry, VersionDiff } from './types/audit';
-import { auditPlan, loadSampleAudit, checkHealth, comparePlans } from './services/api';
+import { auditPlan, loadSampleAudit, checkHealth, comparePlans, linkAuditToParcel } from './services/api';
+import { ParcelMapView } from './components/ParcelMapView';
 
 export const App: React.FC = () => {
   const [auditResult, setAuditResult] = useState<AuditResponse | null>(null);
@@ -13,6 +14,7 @@ export const App: React.FC = () => {
   const [highlightedGuid, setHighlightedGuid] = useState<string | null>(null);
   const [selectedElement, setSelectedElement] = useState<Element3DGeometry | null>(null);
   const [versionDiff, setVersionDiff] = useState<VersionDiff | null>(null);
+  const [activeView, setActiveView] = useState<'audit' | 'map'>('audit');
 
   const bimViewerRef = useRef<BIMViewerRef>(null);
 
@@ -51,6 +53,9 @@ export const App: React.FC = () => {
         formValues.zoningZone
       );
       setAuditResult(result);
+      if (result.audit_id) {
+        await linkAuditToParcel(formValues.parcelId, result.audit_id);
+      }
       setVersionDiff(null);
       setHighlightedGuid(null);
     } catch (err) {
@@ -105,6 +110,8 @@ export const App: React.FC = () => {
         versionDiff={versionDiff}
         backendHealthy={backendHealthy}
         isLoading={isLoading}
+        activeView={activeView}
+        onViewChange={setActiveView}
       />
 
       <main className="flex-1 flex overflow-hidden">
@@ -119,18 +126,32 @@ export const App: React.FC = () => {
         </section>
 
         <section className="flex-1 h-full relative bg-slate-100">
-          <BIMViewer
-            ref={bimViewerRef}
-            elements={[
-              ...(auditResult?.elements_3d || []),
-              ...(versionDiff?.added_elements || []),
-              ...(versionDiff?.removed_elements || []),
-            ]}
-            findings={auditResult?.findings || []}
-            maxPermittedFloors={4}
-            highlightedGuid={highlightedGuid}
-            onSelectElement={setSelectedElement}
-          />
+          <div className={`absolute inset-0 ${activeView === 'audit' ? '' : 'hidden'}`}>
+            <BIMViewer
+              ref={bimViewerRef}
+              elements={[
+                ...(auditResult?.elements_3d || []),
+                ...(versionDiff?.added_elements || []),
+                ...(versionDiff?.removed_elements || []),
+              ]}
+              findings={auditResult?.findings || []}
+              maxPermittedFloors={4}
+              highlightedGuid={highlightedGuid}
+              onSelectElement={setSelectedElement}
+            />
+          </div>
+          <div className={`absolute inset-0 ${activeView === 'map' ? '' : 'hidden'}`}>
+            <ParcelMapView
+              active={activeView === 'map'}
+              styleUrl={import.meta.env.VITE_MAP_STYLE_URL || 'https://demotiles.maplibre.org/style.json'}
+              onOpenAudit={(result) => {
+                setAuditResult(result);
+                setVersionDiff(null);
+                setHighlightedGuid(null);
+                setActiveView('audit');
+              }}
+            />
+          </div>
         </section>
 
         <section className="w-[420px] shrink-0 h-full border-l border-slate-200">
