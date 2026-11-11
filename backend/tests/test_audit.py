@@ -43,7 +43,7 @@ def test_compliant_building_audit():
 
     auditor = IFCAuditor(file_bytes)
     result = auditor.audit(
-        parcel_id="MUNI-PARCEL-100",
+        parcel_id="DEMO-PARCEL-001",
         max_permitted_floors=4,
         min_column_dim_mm=200.0,
     )
@@ -64,7 +64,7 @@ def test_violating_building_audit():
 
     auditor = IFCAuditor(file_bytes)
     result = auditor.audit(
-        parcel_id="ILLEGAL-PARCEL-999",
+        parcel_id="DEMO-PARCEL-001",
         max_permitted_floors=4,
         min_column_dim_mm=200.0,
     )
@@ -93,7 +93,7 @@ def test_api_audit_endpoint_multipart():
         response = client.post(
             "/api/v1/plans/audit",
             data={
-                "parcel_id": "TEST-PARCEL-2026",
+                "parcel_id": "DEMO-PARCEL-001",
                 "max_permitted_floors": 4,
                 "min_column_dim_mm": 200.0,
             },
@@ -124,9 +124,10 @@ def test_mock_parcel_endpoint_labels_records_as_mock():
     response = client.get("/api/v1/parcels")
     assert response.status_code == 200
     data = response.json()
-    assert data["is_mock_data"] is True
-    assert data["parcels"]
-    assert all(parcel["is_mock"] is True for parcel in data["parcels"])
+    assert data["type"] == "FeatureCollection"
+    assert len(data["features"]) == 9
+    assert all(feature["properties"]["source"] == "MOCK DEMO DATA" for feature in data["features"])
+    assert all(feature["properties"]["lr_number"].startswith("DEMO-LR-") for feature in data["features"])
 
 
 def test_sha256_fingerprint_deterministic():
@@ -142,7 +143,7 @@ def test_sha256_fingerprint_deterministic():
 def test_incomplete_ifc_checks_are_not_silently_passed():
     model = ifcopenshell.file(schema="IFC4")
     result = IFCAuditor(model.to_string().encode("utf-8")).audit(
-        parcel_id="MUNI-PARCEL-100",
+        parcel_id="DEMO-PARCEL-001",
         max_permitted_floors=4,
     )
     assert result.overall_status == OverallStatus.FLAGGED_FOR_REVIEW
@@ -235,7 +236,7 @@ def test_upload_size_limit_returns_payload_too_large(monkeypatch):
     monkeypatch.setattr(routes, "MAX_IFC_BYTES", 4)
     response = client.post(
         "/api/v1/plans/audit",
-        data={"parcel_id": "TEST-PARCEL-2026"},
+        data={"parcel_id": "DEMO-PARCEL-001"},
         files={"file": ("sample.ifc", b"ISO-10303-21;", "application/octet-stream")},
     )
     assert response.status_code == 413

@@ -1,12 +1,10 @@
-import json
 import math
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 
 import ifcopenshell
 import ifcopenshell.geom
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 
 from ..core.config import (
@@ -14,13 +12,26 @@ from ..core.config import (
     DEFAULT_MIN_COLUMN_DIM_MM,
     FIXTURES_DIR,
 )
-from ..models.schemas import AuditResponse
-from ..models.schemas import CheckStatusValue, VersionDiff
+from ..models.schemas import (
+    AuditLinkRequest,
+    AuditResponse,
+    CheckStatusValue,
+    ParcelDetailResponse,
+    ParcelFeatureCollection,
+    ParcelSubmissionResponse,
+    VersionDiff,
+)
 from ..services.ifc_auditor import IFCAuditor
+from ..services.parcel_store import (
+    get_parcel_details,
+    link_audit_to_parcel,
+    list_parcel_features,
+    list_parcel_records,
+    save_audit_result,
+)
 
 router = APIRouter()
 MAX_IFC_BYTES = 50 * 1024 * 1024
-MOCK_PARCELS_PATH = Path(__file__).resolve().parents[3] / "mock_parcels.json"
 
 
 async def _read_ifc_upload(file: UploadFile) -> bytes:
@@ -38,8 +49,7 @@ async def _read_ifc_upload(file: UploadFile) -> bytes:
 
 
 def _mock_parcels() -> list[dict]:
-    with open(MOCK_PARCELS_PATH, "r", encoding="utf-8") as parcel_file:
-        return json.load(parcel_file).get("mock_parcels", [])
+    return list_parcel_records()
 
 
 def _length_unit_to_m(model: ifcopenshell.file) -> Optional[float]:
@@ -103,16 +113,40 @@ def health_check():
     }
 
 
-@router.get("/parcels", tags=["Audit"])
-def list_mock_parcels():
-    """Return clearly identified local mock permit records for parcel selection."""
-    return {
-        "is_mock_data": True,
-        "parcels": [
-            {**parcel, "is_mock": True}
-            for parcel in _mock_parcels()
-        ],
-    }
+@router.get("/parcels", response_model=ParcelFeatureCollection, tags=["Parcels"])
+def parcels_geojson(bbox: Optional[str] = Query(default=None, max_length=100)):
+    """Return mock parcels and latest audit properties as a WGS84 GeoJSON FeatureCollection."""
+    try:
+        return list_parcel_features(bbox)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/parcels/{parcel_id}", response_model=ParcelDetailResponse, tags=["Parcels"])
+def parcel_detail(parcel_id: str):
+    """Return one mock parcel and its linked audit history."""
+    parcel = get_parcel_details(parcel_id)
+    if parcel is None:
+        raise HTTPException(status_code=404, detail="Parcel was not found.")
+    return parcel
+
+
+@router.post(
+    "/parcels/{parcel_id}/link-audit",
+    response_model=ParcelSubmissionResponse,
+    tags=["Parcels"],
+)
+def link_parcel_audit(parcel_id: str, request: AuditLinkRequest):
+    """Link a persisted IFC audit result to a demo parcel."""
+    try:
+        submission = link_audit_to_parcel(parcel_id, request.audit_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Parcel was not found.")
+    return submission
 
 
 @router.post(
@@ -151,10 +185,10 @@ async def audit_plan(
         )
 
     # Mock parcel lookup (clearly labeled as mock data — not from an official registry)
-    match = next((p for p in _mock_parcels() if p["parcel_id"] == parcel_id), None)
+    match = next((p for p in _mock_parcels() if p["id"] == parcel_id), None)
     if match is None:
         raise HTTPException(status_code=422, detail="Select a parcel from the mock parcel records; free-typed limits are not used.")
-    max_permitted_floors = match["max_permitted_storeys"]
+    max_permitted_floors = match["permitted_storeys"]
     county = match.get("county", county)
     zoning_zone = match.get("zone", zoning_zone)
 
@@ -167,6 +201,7 @@ async def audit_plan(
         )
         result.county = county
         result.zoning_zone = zoning_zone
+        result.audit_id = save_audit_result(result)
         return result
     except Exception as exc:
         if isinstance(exc, ifcopenshell.Error):
@@ -302,17 +337,19 @@ def audit_sample_plan(
         file_bytes = f.read()
 
     auditor = IFCAuditor(file_bytes)
-    parcel_id = "L.R. 209/8402 (Kasarani, Nairobi)"
-    parcel = next((p for p in _mock_parcels() if p["parcel_id"] == parcel_id), None)
+    parcel_id = "DEMO-PARCEL-001"
+    parcel = next((p for p in _mock_parcels() if p["id"] == parcel_id), None)
     if parcel is None:
         raise HTTPException(status_code=500, detail="Synthetic fixture parcel is missing from mock parcel records.")
     result = auditor.audit(
         parcel_id=parcel_id,
-        max_permitted_floors=parcel["max_permitted_storeys"],
+        max_permitted_floors=parcel["permitted_storeys"],
         min_column_dim_mm=min_column_dim_mm,
     )
     result.county = parcel["county"]
     result.zoning_zone = parcel["zone"]
+    result.audit_id = save_audit_result(result)
+    link_audit_to_parcel(parcel_id, result.audit_id)
     return result
 
 

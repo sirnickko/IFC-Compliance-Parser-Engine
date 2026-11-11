@@ -1,4 +1,5 @@
 import { AuditResponse, MockParcel, VersionDiff } from '../types/audit';
+import { ParcelDetails, ParcelFeatureCollection } from '../types/parcel';
 
 const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 const API_BASE = `${BASE_URL}/api/v1`;
@@ -68,8 +69,47 @@ export async function loadMockParcels(): Promise<MockParcel[]> {
   if (!response.ok) {
     throw new Error(`Failed to load mock parcel records: ${response.statusText}`);
   }
-  const data = await response.json();
-  return data.parcels;
+  const data: ParcelFeatureCollection = await response.json();
+  return data.features.map((feature) => ({
+    id: feature.properties.id,
+    lr_number: feature.properties.lr_number,
+    county: feature.properties.county,
+    zone: feature.properties.zone,
+    permitted_storeys: feature.properties.permitted_storeys,
+    source: feature.properties.source,
+    last_updated: feature.properties.last_updated,
+  }));
+}
+
+export async function getParcelFeatures(bbox?: string): Promise<ParcelFeatureCollection> {
+  const query = bbox ? `?bbox=${encodeURIComponent(bbox)}` : '';
+  const response = await fetch(`${API_BASE}/parcels${query}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to load parcels: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function getParcelDetails(parcelId: string): Promise<ParcelDetails> {
+  const response = await fetch(`${API_BASE}/parcels/${encodeURIComponent(parcelId)}`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to load parcel: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function linkAuditToParcel(parcelId: string, auditId: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/parcels/${encodeURIComponent(parcelId)}/link-audit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ audit_id: auditId }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to link audit: ${response.statusText}`);
+  }
 }
 
 export async function comparePlans(approvedFile: File, currentFile: File): Promise<VersionDiff> {

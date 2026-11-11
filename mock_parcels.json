@@ -1,60 +1,94 @@
 {
   "mock_parcels": [
     {
-      "parcel_id": "PARCEL123",
-      "county": "Nairobi City County",
-      "zone": "Nairobi Zone 14 (mock)",
-      "max_permitted_storeys": 4,
-      "description": "Mock permit record for testing only"
+      "id": "DEMO-PARCEL-001",
+      "lr_number": "DEMO-LR-001",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 4,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8870, -1.2140], [36.8877, -1.2140], [36.8877, -1.2135], [36.8870, -1.2135], [36.8870, -1.2140]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     },
     {
-      "parcel_id": "PARCEL456",
-      "county": "Nairobi City County",
-      "zone": "Nairobi Zone 5 (mock)",
-      "max_permitted_storeys": 5,
-      "description": "Mock parcel record for testing only"
+      "id": "DEMO-PARCEL-002",
+      "lr_number": "DEMO-LR-002",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 4,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8878, -1.2140], [36.8885, -1.2140], [36.8885, -1.2135], [36.8878, -1.2135], [36.8878, -1.2140]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     },
     {
-      "parcel_id": "L.R. 209/8402 (Kasarani)",
-      "county": "Nairobi City County",
-      "zone": "Nairobi Zone 14 (mock)",
-      "max_permitted_storeys": 4,
-      "description": "Synthetic fixture parcel; mock permit record"
+      "id": "DEMO-PARCEL-003",
+      "lr_number": "DEMO-LR-003",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 5,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8886, -1.2140], [36.8893, -1.2140], [36.8893, -1.2135], [36.8886, -1.2135], [36.8886, -1.2140]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     },
     {
-      "parcel_id": "L.R. 209/8402 (Kasarani, Nairobi)",
-      "county": "Nairobi City County",
-      "zone": "Nairobi Zone 14 (mock)",
-      "max_permitted_storeys": 4,
-      "description": "Synthetic fixture parcel; mock permit record"
+      "id": "DEMO-PARCEL-004",
+      "lr_number": "DEMO-LR-004",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 4,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8870, -1.2134], [36.8877, -1.2134], [36.8877, -1.2129], [36.8870, -1.2129], [36.8870, -1.2134]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     },
     {
-      "parcel_id": "L.R. 209/11204 (Westlands, Nairobi)",
-      "county": "Nairobi City County",
-      "zone": "Nairobi Zone 14 (mock)",
-      "max_permitted_storeys": 4,
-      "description": "Synthetic fixture parcel; mock permit record"
+      "id": "DEMO-PARCEL-005",
+      "lr_number": "DEMO-LR-005",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 6,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8878, -1.2134], [36.8885, -1.2134], [36.8885, -1.2129], [36.8878, -1.2129], [36.8878, -1.2134]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     },
     {
-      "parcel_id": "MUNI-PARCEL-100",
-      "county": "Nairobi City County",
-      "zone": "Nairobi mock test zone",
-      "max_permitted_storeys": 4,
-      "description": "Test record; mock data"
+      "id": "DEMO-PARCEL-006",
+      "lr_number": "DEMO-LR-006",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 4,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8886, -1.2134], [36.8893, -1.2134], [36.8893, -1.2129], [36.8886, -1.2129], [36.8886, -1.2134]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     },
     {
-      "parcel_id": "ILLEGAL-PARCEL-999",
-      "county": "Nairobi City County",
-      "zone": "Nairobi mock test zone",
-      "max_permitted_storeys": 4,
-      "description": "Test record; mock data"
+      "id": "DEMO-PARCEL-007",
+      "lr_number": "DEMO-LR-007",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 3,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8870, -1.2128], [36.8877, -1.2128], [36.8877, -1.2123], [36.8870, -1.2123], [36.8870, -1.2128]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     },
     {
-      "parcel_id": "TEST-PARCEL-2026",
-      "county": "Nairobi City County",
-      "zone": "Nairobi mock test zone",
-      "max_permitted_storeys": 4,
-      "description": "Test record; mock data"
+      "id": "DEMO-PARCEL-008",
+      "lr_number": "DEMO-LR-008",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 4,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8878, -1.2128], [36.8885, -1.2128], [36.8885, -1.2123], [36.8878, -1.2123], [36.8878, -1.2128]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
+    },
+    {
+      "id": "DEMO-PARCEL-009",
+      "lr_number": "DEMO-LR-009",
+      "county": "Nairobi City County (demo)",
+      "zone": "Kasarani Demo Zone",
+      "permitted_storeys": 5,
+      "geometry": {"type": "Polygon", "coordinates": [[[36.8886, -1.2128], [36.8893, -1.2128], [36.8893, -1.2123], [36.8886, -1.2123], [36.8886, -1.2128]]]},
+      "source": "MOCK DEMO DATA",
+      "last_updated": "2026-11-11T00:00:00Z"
     }
   ]
 }

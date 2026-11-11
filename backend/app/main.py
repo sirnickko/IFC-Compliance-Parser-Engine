@@ -44,8 +44,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API Router under /api/v1 and top-level /health
+# Keep the versioned API and requested stable parcel endpoints available.
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api")
 app.include_router(api_router)  # Also provides /health at root level
 
 

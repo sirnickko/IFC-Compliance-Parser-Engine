@@ -36,6 +36,16 @@ The correct statute name is **Physical and Land Use Planning Act, 2019**. A stat
 - Uploads are limited to 50 MiB. Malformed files are rejected; incomplete models produce explicit check statuses where possible.
 - The repository currently includes synthetic fixtures only. Three real/open-source IFC sample files could not be added in this environment because external downloads were unavailable; the synthetic fixtures are not represented as real projects.
 
+## Parcel Map View
+
+The Map View displays parcel polygons and linked audit results; it does not make compliance decisions. The included nine parcels are synthetic demo records around Kasarani, use `DEMO-LR-*` identifiers, contain no owner data, and every record is labeled `MOCK DEMO DATA`. Map styling is configurable with the frontend `VITE_MAP_STYLE_URL` environment variable. The development default is MapLibre's public demo style and has no paid key or service guarantee.
+
+Parcel geometry is stored as WGS84 GeoJSON in SQLite (`SITEBETA_DB_PATH` can override the database path). Geometry is kept as GeoJSON rather than a SQLite-specific spatial format so the schema can migrate to PostGIS later. The API provides GeoJSON at `/api/parcels` (including optional `bbox=west,south,east,north` filtering), parcel details and audit history at `/api/parcels/{id}`, and audit linking at `/api/parcels/{id}/link-audit`; versioned equivalents remain under `/api/v1`.
+
+The default demo map style is not production tile infrastructure. OpenStreetMap data is available under its own attribution and usage terms; do not hot-link the public `tile.openstreetmap.org` servers for a production application. Choose an appropriately licensed tile provider or host tiles yourself, and follow the selected provider's usage policy.
+
+The typed map-layer registry reserves a disabled extension point for detected construction features. A future module could compare Sentinel imagery and open building-footprint datasets against parcel geometries, recording detection date, confidence, source-image date, and matched parcel. No satellite imagery, external detection API, or change detection is currently used.
+
 ## Run locally
 
 ### Backend
@@ -58,6 +68,6 @@ npm run dev
 
 ## Tests
 
-From the repository root, run `pytest backend/tests -q`. The frontend production/type check is `cd frontend; npm run build`.
+From the repository root, run `pytest backend/tests -q`. For the frontend production/type check and utility tests, run `cd frontend; npm run build; npm run test`.
 
-All checks run locally. No external API or paid service is used.
+The IFC checks run locally and do not call an external decision service. The frontend includes Vercel Analytics for page-view measurement; enable Web Analytics in the Vercel project's dashboard after deployment. Page-view analytics data is sent to Vercel. No paid service is required by this integration.

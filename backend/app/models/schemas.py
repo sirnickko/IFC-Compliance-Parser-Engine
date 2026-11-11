@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
 
@@ -121,3 +121,72 @@ class AuditResponse(BaseModel):
     findings: List[Finding]
     elements_3d: List[Element3DGeometry] = Field(default_factory=list)
     checks: List[CheckStatus] = Field(default_factory=list)
+    audit_id: Optional[str] = None
+
+
+class AuditLinkRequest(BaseModel):
+    audit_id: str = Field(..., min_length=1, max_length=64)
+
+
+class GeoJSONPolygon(BaseModel):
+    type: Literal["Polygon"] = "Polygon"
+    coordinates: List[List[List[float]]]
+
+
+class ParcelProperties(BaseModel):
+    id: str
+    lr_number: str
+    county: str
+    zone: str
+    permitted_storeys: int
+    source: Literal["MOCK DEMO DATA"]
+    last_updated: str
+    audit_status: Optional[Literal["compliant", "non-compliant", "could_not_check", "unchecked"]] = "unchecked"
+    violation_count: int = 0
+    highest_severity: Optional[Severity] = None
+    audited_at: Optional[str] = None
+    model_hash: Optional[str] = None
+    audit_id: Optional[str] = None
+    has_unverified_rules: bool = False
+
+
+class ParcelFeature(BaseModel):
+    type: Literal["Feature"] = "Feature"
+    id: str
+    geometry: GeoJSONPolygon
+    properties: ParcelProperties
+
+
+class ParcelFeatureCollection(BaseModel):
+    type: Literal["FeatureCollection"] = "FeatureCollection"
+    features: List[ParcelFeature]
+
+
+class ParcelAuditHistoryItem(BaseModel):
+    submission_id: str
+    audit_id: str
+    audit_status: Literal["compliant", "non-compliant", "could_not_check", "unchecked"]
+    violation_count: int
+    highest_severity: Optional[Severity]
+    audited_at: str
+    model_hash: str
+    audit_result: AuditResponse
+
+
+class ParcelDetailResponse(BaseModel):
+    type: Literal["Feature"] = "Feature"
+    id: str
+    geometry: GeoJSONPolygon
+    properties: ParcelProperties
+    audit_history: List[ParcelAuditHistoryItem]
+
+
+class ParcelSubmissionResponse(BaseModel):
+    submission_id: str
+    parcel_id: str
+    audit_id: str
+    audit_status: Literal["compliant", "non-compliant", "could_not_check", "unchecked"]
+    violation_count: int
+    highest_severity: Optional[Severity]
+    audited_at: str
+    model_hash: str
